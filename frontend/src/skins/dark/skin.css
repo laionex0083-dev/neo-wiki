@@ -1,0 +1,45 @@
+/* ============================================
+   Dark Skin - 다크 모드 스킨
+   ============================================ */
+
+.skin-dark {
+    /* 다크 모드 색상은 index.css에서 이미 정의됨 */
+
+    /* 추가 다크 모드 스타일 */
+    .wiki-page {
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+    }
+
+    .wiki-header {
+        background: var(--color-bg-tertiary);
+        border-bottom-color: var(--color-border);
+    }
+
+    .wiki-sidebar {
+        background: var(--color-bg-tertiary);
+    }
+
+    .wiki-search-input {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border);
+    }
+
+    .wiki-search-input:focus {
+        background: var(--color-bg-primary);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+    }
+
+    .wiki-page-content code {
+        background: var(--color-bg-tertiary);
+        border: 1px solid var(--color-border);
+    }
+
+    .wiki-page-content pre {
+        background: #0d1117;
+        border: 1px solid var(--color-border);
+    }
+}
