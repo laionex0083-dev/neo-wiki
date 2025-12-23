@@ -1,8 +1,51 @@
 import express from 'express';
 import { dbHelper, saveDatabase } from '../database/init.js';
 import { parseNamuMark } from '../parser/namumark.js';
+import { optionalAuth, canEditPage, ROLES, hasPermission } from './users.js';
+import { searchTitles, addToTitleCache, removeFromTitleCache } from '../titleCache.js';
 
 const router = express.Router();
+
+/**
+ * 자동완성 검색 API
+ */
+router.get('/autocomplete', (req, res) => {
+    try {
+        const { q, limit = 10 } = req.query;
+
+        if (!q || q.trim() === '') {
+            return res.json({ results: [] });
+        }
+
+        const results = searchTitles(q, parseInt(limit));
+        res.json({ results });
+    } catch (error) {
+        console.error('Error in autocomplete:', error);
+        res.status(500).json({ error: '자동완성 검색 중 오류가 발생했습니다.' });
+    }
+});
+
+/**
+ * 미리보기 API - NamuMark를 HTML로 파싱 (저장하지 않음)
+ */
+router.post('/preview', (req, res) => {
+    try {
+        const { content } = req.body;
+
+        if (typeof content !== 'string') {
+            return res.status(400).json({ error: '내용이 필요합니다.' });
+        }
+
+        const parsed = parseNamuMark(content);
+        res.json({
+            html: parsed.html,
+            toc: parsed.toc
+        });
+    } catch (error) {
+        console.error('Error in preview:', error);
+        res.status(500).json({ error: '미리보기 처리 중 오류가 발생했습니다.' });
+    }
+});
 
 /**
  * 문서 목록 조회
@@ -174,9 +217,61 @@ router.get('/:title/raw', (req, res) => {
 });
 
 /**
+ * 역링크(Backlinks) 조회 - 해당 문서를 참조하는 모든 문서 목록
+ */
+router.get('/:title/backlinks', (req, res) => {
+    try {
+        const title = decodeURIComponent(req.params.title);
+
+        // 해당 문서를 참조하는 모든 문서 목록 조회 (알파벳/가나다 순 정렬)
+        const backlinks = dbHelper.prepare(`
+            SELECT DISTINCT p.title, p.updated_at, p.view_count
+            FROM backlinks b 
+            JOIN pages p ON b.from_page_id = p.id 
+            WHERE b.to_page_title = ?
+            ORDER BY p.title COLLATE NOCASE ASC
+        `).all(title);
+
+        res.json({
+            title,
+            backlinks,
+            count: backlinks.length
+        });
+    } catch (error) {
+        console.error('Error fetching backlinks:', error);
+        res.status(500).json({ error: '역링크를 가져오는 중 오류가 발생했습니다.' });
+    }
+});
+
+/**
+ * 문서 보호 상태 조회
+ */
+router.get('/:title/protection', (req, res) => {
+    try {
+        const title = decodeURIComponent(req.params.title);
+
+        const protection = dbHelper.prepare(`
+            SELECT pa.*, u.username as protected_by_username
+            FROM page_acl pa
+            LEFT JOIN users u ON pa.protected_by = u.id
+            WHERE pa.page_title = ?
+            AND (pa.expires_at IS NULL OR pa.expires_at > datetime('now'))
+        `).get(title);
+
+        res.json({
+            protection: protection || null,
+            isProtected: !!protection
+        });
+    } catch (error) {
+        console.error('Error fetching page protection:', error);
+        res.status(500).json({ error: '문서 보호 상태를 가져오는 중 오류가 발생했습니다.' });
+    }
+});
+
+/**
  * 문서 생성/수정
  */
-router.post('/:title', (req, res) => {
+router.post('/:title', optionalAuth, canEditPage, (req, res) => {
     try {
         const title = decodeURIComponent(req.params.title);
         const { content, edit_summary = '' } = req.body;
@@ -235,6 +330,9 @@ router.post('/:title', (req, res) => {
             updateBacklinks(pageId, content);
             updateCategories(pageId, content);
 
+            // 제목 캐시에 추가
+            addToTitleCache(title);
+
             res.json({ success: true, message: '새 문서가 생성되었습니다.', id: pageId });
         }
     } catch (error) {
@@ -244,11 +342,17 @@ router.post('/:title', (req, res) => {
 });
 
 /**
- * 문서 삭제
+ * 문서 삭제 (관리자 권한 필요)
  */
-router.delete('/:title', (req, res) => {
+router.delete('/:title', optionalAuth, (req, res) => {
     try {
         const title = decodeURIComponent(req.params.title);
+
+        // 관리자 권한 확인
+        const userRole = req.user?.role || ROLES.GUEST;
+        if (!hasPermission(userRole, ROLES.ADMIN)) {
+            return res.status(403).json({ error: '문서 삭제는 관리자만 가능합니다.' });
+        }
 
         const page = dbHelper.prepare('SELECT id FROM pages WHERE title = ?').get(title);
         if (!page) {
@@ -257,8 +361,12 @@ router.delete('/:title', (req, res) => {
 
         dbHelper.prepare('DELETE FROM backlinks WHERE from_page_id = ?').run(page.id);
         dbHelper.prepare('DELETE FROM categories WHERE page_id = ?').run(page.id);
+        dbHelper.prepare('DELETE FROM page_acl WHERE page_id = ?').run(page.id);
         dbHelper.prepare('DELETE FROM page_history WHERE page_id = ?').run(page.id);
         dbHelper.prepare('DELETE FROM pages WHERE id = ?').run(page.id);
+
+        // 제목 캐시에서 제거
+        removeFromTitleCache(title);
 
         res.json({ success: true, message: '문서가 삭제되었습니다.' });
     } catch (error) {

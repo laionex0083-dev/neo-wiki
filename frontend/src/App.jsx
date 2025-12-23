@@ -11,6 +11,9 @@ import SearchResults from './pages/SearchResults';
 import UploadPage from './pages/UploadPage';
 import RevisionView from './pages/RevisionView';
 import DiffView from './pages/DiffView';
+import SettingsPage from './pages/SettingsPage';
+import AdminPage from './pages/AdminPage';
+import BacklinksPage from './pages/BacklinksPage';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -46,20 +49,24 @@ function App() {
         localStorage.removeItem('wiki_token');
     };
 
+    // 관리자 권한 확인 (admin 또는 owner)
+    const isAdmin = user && ['admin', 'owner'].includes(user.role);
+
     return (
         <div className={`wiki-app skin-${skin}`}>
             <Header
                 user={user}
                 onLogin={handleLogin}
                 onLogout={handleLogout}
+                isAdmin={isAdmin}
             />
             <div className="wiki-main">
-                <Sidebar />
+                <Sidebar user={user} isAdmin={isAdmin} />
                 <main className="wiki-content">
                     <Routes>
                         {/* 위키 문서 보기 (/w/제목) */}
-                        <Route path="/w/:title" element={<PageView />} />
-                        <Route path="/w" element={<PageView />} />
+                        <Route path="/w/:title" element={<PageView user={user} />} />
+                        <Route path="/w" element={<PageView user={user} />} />
 
                         {/* 문서 편집 */}
                         <Route path="/edit/:title" element={<PageEdit />} />
@@ -67,6 +74,9 @@ function App() {
 
                         {/* 문서 히스토리 */}
                         <Route path="/history/:title" element={<PageHistory />} />
+
+                        {/* 역링크 */}
+                        <Route path="/backlinks/:title" element={<BacklinksPage />} />
 
                         {/* 리비전 보기 */}
                         <Route path="/revision/:title/:revision" element={<RevisionView />} />
@@ -79,9 +89,13 @@ function App() {
                         <Route path="/recent" element={<RecentChanges />} />
                         <Route path="/search" element={<SearchResults />} />
                         <Route path="/upload" element={<UploadPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+
+                        {/* 관리자 페이지 */}
+                        <Route path="/admin" element={<AdminPage />} />
 
                         {/* 기본 라우트 - 대문으로 */}
-                        <Route path="/" element={<PageView defaultTitle="대문" />} />
+                        <Route path="/" element={<PageView defaultTitle="대문" user={user} />} />
 
                         {/* 404 */}
                         <Route path="*" element={<NotFound />} />

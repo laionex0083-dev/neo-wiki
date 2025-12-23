@@ -134,12 +134,70 @@ export async function initDatabase() {
     )
   `);
 
+  // 문서 보호(ACL) 테이블
+  db.run(`
+    CREATE TABLE IF NOT EXISTS page_acl (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      page_id INTEGER,
+      page_title TEXT,
+      protection_level TEXT DEFAULT 'none',
+      edit_require TEXT DEFAULT 'all',
+      move_require TEXT DEFAULT 'user',
+      delete_require TEXT DEFAULT 'admin',
+      protected_by INTEGER,
+      protected_at TEXT DEFAULT (datetime('now')),
+      expires_at TEXT,
+      reason TEXT
+    )
+  `);
+
+  // 사용자 차단 기록 테이블
+  db.run(`
+    CREATE TABLE IF NOT EXISTS user_blocks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      blocked_by INTEGER NOT NULL,
+      blocked_at TEXT DEFAULT (datetime('now')),
+      expires_at TEXT,
+      reason TEXT,
+      is_active INTEGER DEFAULT 1
+    )
+  `);
+
+  // 관리자 로그 테이블
+  db.run(`
+    CREATE TABLE IF NOT EXISTS admin_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      admin_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      target_type TEXT,
+      target_id INTEGER,
+      details TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // 코멘트 테이블
+  db.run(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      page_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      is_edited INTEGER DEFAULT 0,
+      is_deleted INTEGER DEFAULT 0
+    )
+  `);
+
   // 인덱스 생성
   db.run(`CREATE INDEX IF NOT EXISTS idx_pages_title ON pages(title)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_pages_namespace ON pages(namespace)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_history_page_id ON page_history(page_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_backlinks_to ON backlinks(to_page_title)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(category_name)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_comments_page_id ON comments(page_id)`);
 
   // 기본 설정 삽입
   const defaultSettings = [

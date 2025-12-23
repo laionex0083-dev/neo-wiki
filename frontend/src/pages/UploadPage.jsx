@@ -14,6 +14,7 @@ function UploadPage() {
     const [totalImages, setTotalImages] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+    const [deleteConfirmImage, setDeleteConfirmImage] = useState(null); // 삭제 확인 모달용
     const imagesPerPage = 20;
 
     // 이미지 목록 불러오기
@@ -118,27 +119,38 @@ function UploadPage() {
         alert('위키 코드가 클립보드에 복사되었습니다!');
     };
 
-    const handleDeleteImage = async (imageId, storedName) => {
-        if (!confirm('정말로 이 이미지를 삭제하시겠습니까?')) return;
+    // 삭제 확인 모달 표시
+    const showDeleteConfirm = (imageId, storedName, originalName) => {
+        setDeleteConfirmImage({ id: imageId, storedName, originalName });
+    };
+
+    // 삭제 취소
+    const cancelDelete = () => {
+        setDeleteConfirmImage(null);
+    };
+
+    // 실제 삭제 수행
+    const confirmDelete = async () => {
+        if (!deleteConfirmImage) return;
 
         try {
-            // ID로 우선 삭제 시도
-            const res = await fetch(`/api/upload/${imageId}`, {
+            const res = await fetch(`/api/upload/${deleteConfirmImage.id}`, {
                 method: 'DELETE'
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                fetchImageList();
-                setUploadedFiles(prev => prev.filter(f => f.id !== imageId && f.stored_name !== storedName));
-                alert('이미지가 삭제되었습니다.');
+                // 삭제 성공 시 페이지 새로고침
+                window.location.reload();
             } else {
                 alert(`삭제 실패: ${data.error || '알 수 없는 오류'}`);
+                setDeleteConfirmImage(null);
             }
         } catch (err) {
             console.error('Delete error:', err);
             alert('삭제 중 오류가 발생했습니다.');
+            setDeleteConfirmImage(null);
         }
     };
 
@@ -360,7 +372,7 @@ function UploadPage() {
                                         </button>
                                         <button
                                             className="btn btn-outline"
-                                            onClick={() => handleDeleteImage(img.id, img.stored_name)}
+                                            onClick={() => showDeleteConfirm(img.id, img.stored_name, img.original_name)}
                                             style={{ padding: '0.25rem', fontSize: '0.7rem', color: 'var(--color-danger)' }}
                                         >
                                             🗑️
@@ -413,7 +425,7 @@ function UploadPage() {
                                     </button>
                                     <button
                                         className="btn btn-danger"
-                                        onClick={() => handleDeleteImage(img.id, img.stored_name)}
+                                        onClick={() => showDeleteConfirm(img.id, img.stored_name, img.original_name)}
                                         style={{ fontSize: '0.75rem' }}
                                     >
                                         🗑️ 삭제
@@ -474,6 +486,67 @@ function UploadPage() {
                     이미지 크기 조절: <code>[[파일:이미지.png|width=300]]</code>
                 </p>
             </div>
+
+            {/* 삭제 확인 모달 */}
+            {deleteConfirmImage && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        background: 'var(--color-bg-primary)',
+                        padding: '1.5rem',
+                        borderRadius: 'var(--radius-lg)',
+                        maxWidth: '400px',
+                        width: '90%',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>🗑️ 이미지 삭제</h3>
+                        <p style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>
+                            정말 이 이미지를 삭제하시겠습니까?
+                        </p>
+                        <p style={{
+                            marginBottom: '1rem',
+                            padding: '0.5rem',
+                            background: 'var(--color-bg-secondary)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.875rem',
+                            wordBreak: 'break-all'
+                        }}>
+                            📁 {deleteConfirmImage.originalName}
+                        </p>
+                        <p style={{ marginBottom: '1.5rem', color: 'var(--color-danger)', fontSize: '0.875rem' }}>
+                            ⚠️ 삭제된 이미지는 복구할 수 없습니다.
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={cancelDelete}
+                            >
+                                취소
+                            </button>
+                            <button
+                                className="btn btn-danger"
+                                onClick={confirmDelete}
+                                style={{
+                                    background: 'var(--color-danger)',
+                                    color: 'white'
+                                }}
+                            >
+                                삭제
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

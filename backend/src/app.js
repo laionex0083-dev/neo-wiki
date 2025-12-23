@@ -1,8 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { initDatabase } from './database/init.js';
+import { initTitleCache } from './titleCache.js';
 import config from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,7 +13,67 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-// 미들웨어
+// ============================================
+// 보안 미들웨어
+// ============================================
+
+// Helmet - HTTP 보안 헤더 설정
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "blob:", "/uploads/*"],
+            scriptSrc: ["'self'"],
+            connectSrc: ["'self'"]
+        }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// 전역 Rate Limiter - 모든 요청에 대해 15분당 1000개 제한
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 1000, // 최대 요청 수
+    message: { error: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use(globalLimiter);
+
+// API 요청에 대한 더 엄격한 Rate Limiter
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 300, // API는 더 엄격하게 제한
+    message: { error: 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// 문서 수정 요청에 대한 엄격한 Rate Limiter
+const writeLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1분
+    max: 10, // 분당 10개 수정 요청
+    message: { error: '문서 수정 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// 로그인/회원가입에 대한 Rate Limiter
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1시간
+    max: 10, // 시간당 10회
+    message: { error: '인증 요청이 너무 많습니다. 1시간 후 다시 시도해주세요.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// ============================================
+// 일반 미들웨어
+// ============================================
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -28,25 +91,39 @@ async function startServer() {
         // 데이터베이스 초기화 (비동기)
         await initDatabase();
 
+        // 제목 캐시 초기화
+        initTitleCache();
+
         // 라우트 동적 로드
         const pagesRouter = (await import('./routes/pages.js')).default;
         const usersRouter = (await import('./routes/users.js')).default;
         const uploadRouter = (await import('./routes/upload.js')).default;
         const historyRouter = (await import('./routes/history.js')).default;
         const skinsRouter = (await import('./routes/skins.js')).default;
+        const commentsRouter = (await import('./routes/comments.js')).default;
 
-        // API 라우트
-        app.use('/api/pages', pagesRouter);
-        app.use('/api/users', usersRouter);
-        app.use('/api/upload', uploadRouter);
-        app.use('/api/history', historyRouter);
-        app.use('/api/skins', skinsRouter);
+        // API 라우트 (Rate Limiter 적용)
+        app.use('/api/pages', apiLimiter, pagesRouter);
+        app.use('/api/users', usersRouter); // 개별 엔드포인트에서 처리
+        app.use('/api/upload', apiLimiter, uploadRouter);
+        app.use('/api/history', apiLimiter, historyRouter);
+        app.use('/api/skins', apiLimiter, skinsRouter);
+        app.use('/api/comments', apiLimiter, commentsRouter);
+
+        // 인증 엔드포인트에 Rate Limiter 적용
+        app.post('/api/users/register', authLimiter);
+        app.post('/api/users/login', authLimiter);
 
         // 기본 라우트
         app.get('/api', (req, res) => {
             res.json({
                 name: config.wiki.name,
                 version: '1.0.0',
+                security: {
+                    helmet: true,
+                    rateLimiting: true,
+                    xssSanitization: true
+                },
                 endpoints: {
                     pages: '/api/pages',
                     users: '/api/users',
@@ -92,6 +169,7 @@ async function startServer() {
         app.listen(config.port, config.host, () => {
             console.log(`🌳 ${config.wiki.name} 서버가 http://${config.host}:${config.port} 에서 실행 중입니다.`);
             console.log(`📚 API 문서: http://localhost:${config.port}/api`);
+            console.log(`🔒 보안 기능: Helmet, Rate Limiting, XSS 방지 활성화`);
 
             // 라즈베리 파이 감지
             if (process.arch === 'arm' || process.arch === 'arm64') {
@@ -122,4 +200,5 @@ async function startServer() {
 
 startServer();
 
+export { writeLimiter, authLimiter };
 export default app;

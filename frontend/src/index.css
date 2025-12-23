@@ -66,12 +66,14 @@
 
 /* Dark Theme */
 .skin-dark {
+    --color-bg: #1a1a2e;
     --color-bg-primary: #1a1a2e;
     --color-bg-secondary: #16213e;
     --color-bg-tertiary: #0f3460;
+    --color-text: #eaeaea;
     --color-text-primary: #eaeaea;
-    --color-text-secondary: #b0b0b0;
-    --color-text-muted: #777;
+    --color-text-secondary: #c0c0c0;
+    --color-text-muted: #888;
     --color-border: #2e2e4a;
     --color-border-light: #252540;
     --color-accent: #4da8da;
@@ -80,6 +82,711 @@
     --color-link: #6cb4ee;
     --color-link-visited: #b794f4;
     --color-link-external: #9ae6b4;
+    --color-success: #48bb78;
+    --color-danger: #fc8181;
+    --color-warning: #f6e05e;
+}
+
+/* 다크 모드 - 전체 페이지 스타일 오버라이드 */
+.skin-dark,
+.skin-dark body {
+    background-color: var(--color-bg-secondary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.skin-dark .wiki-header {
+    background: var(--color-bg-primary);
+    border-bottom-color: var(--color-border);
+}
+
+.skin-dark .wiki-sidebar {
+    background: var(--color-bg-primary);
+    border-right-color: var(--color-border);
+}
+
+.skin-dark .wiki-page,
+.skin-dark .wiki-editor,
+.skin-dark .wiki-history {
+    background: var(--color-bg-primary);
+}
+
+.skin-dark .wiki-search-input {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.skin-dark .wiki-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.skin-dark .form-input,
+.skin-dark .form-textarea,
+.skin-dark .form-select,
+.skin-dark .wiki-editor-textarea {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.skin-dark .form-input::placeholder,
+.skin-dark .form-textarea::placeholder,
+.skin-dark .wiki-editor-textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+.skin-dark .btn-secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.skin-dark .btn-outline {
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.skin-dark .btn-outline:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-dark .wiki-editor-toolbar {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-dark .wiki-editor-toolbar button {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.skin-dark .wiki-toc,
+.skin-dark .wiki-folding,
+.skin-dark .wiki-editor-preview {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+.skin-dark .wiki-upload-zone {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+.skin-dark .wiki-page-content pre,
+.skin-dark .wiki-page-content code {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-dark .wiki-page-content blockquote {
+    background: var(--color-bg-secondary);
+}
+
+.skin-dark .wiki-page-content th {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-dark .alert-success {
+    background: rgba(72, 187, 120, 0.2);
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.skin-dark .alert-error {
+    background: rgba(252, 129, 129, 0.2);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* ===== RDL Theme - Light Mode ===== */
+.skin-rdl {
+    /* Base Colors */
+    --color-bg-primary: #FDFBF7;
+    --color-bg-secondary: rgba(180, 181, 172, 0.2);
+    --color-bg-tertiary: rgba(180, 181, 172, 0.35);
+    --color-text-primary: #424546;
+    --color-text-secondary: #5a5c5d;
+    --color-text-muted: #7a7c7d;
+    --color-border: #B4B5AC;
+    --color-border-light: rgba(180, 181, 172, 0.5);
+
+    /* Brand Colors - Wine/Burgundy */
+    --color-accent: #8D2529;
+    --color-accent-hover: #A12423;
+    --color-accent-light: rgba(141, 37, 41, 0.1);
+    --color-accent-rgb: 141, 37, 41;
+
+    /* Status Colors - Harmonized with RDL theme */
+    --color-success: #2D7D46;
+    --color-warning: #C9922E;
+    --color-danger: #A12423;
+    --color-info: #4A6FA5;
+
+    /* Wiki Link Colors */
+    --color-link: #8D2529;
+    --color-link-visited: #6D1B1E;
+    --color-link-external: #A12423;
+    --color-link-broken: #C9922E;
+}
+
+/* RDL Light Mode - Component Overrides */
+.skin-rdl,
+.skin-rdl body {
+    background-color: var(--color-bg-secondary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.skin-rdl .wiki-header {
+    background: var(--color-accent);
+    border-bottom: 2px solid #6D1B1E;
+    box-shadow: 0 2px 8px rgba(141, 37, 41, 0.15);
+}
+
+.skin-rdl .wiki-header-logo {
+    color: #FDFBF7;
+}
+
+.skin-rdl .wiki-header-logo:hover {
+    color: rgba(253, 251, 247, 0.85);
+}
+
+.skin-rdl .wiki-header-nav a,
+.skin-rdl .wiki-header-nav button {
+    color: rgba(253, 251, 247, 0.9);
+}
+
+.skin-rdl .wiki-header-nav a:hover,
+.skin-rdl .wiki-header-nav button:hover {
+    background: rgba(253, 251, 247, 0.15);
+    color: #FDFBF7;
+}
+
+.skin-rdl .wiki-search-input {
+    background: rgba(253, 251, 247, 0.95);
+    border-color: rgba(253, 251, 247, 0.3);
+    color: var(--color-text-primary);
+}
+
+.skin-rdl .wiki-search-input::placeholder {
+    color: #7a7c7d;
+}
+
+.skin-rdl .wiki-search-input:focus {
+    border-color: #FDFBF7;
+    box-shadow: 0 0 0 3px rgba(253, 251, 247, 0.25);
+}
+
+.skin-rdl .wiki-sidebar {
+    background: var(--color-bg-primary);
+    border-right-color: var(--color-border);
+}
+
+.skin-rdl .wiki-page,
+.skin-rdl .wiki-editor,
+.skin-rdl .wiki-history {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-rdl .wiki-page-header {
+    border-bottom-color: var(--color-accent);
+}
+
+.skin-rdl .wiki-page-title {
+    color: var(--color-accent);
+}
+
+.skin-rdl .btn-primary {
+    background: var(--color-accent);
+    color: #FDFBF7;
+}
+
+.skin-rdl .btn-primary:hover {
+    background: var(--color-accent-hover);
+}
+
+.skin-rdl .btn-secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-rdl .btn-outline {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.skin-rdl .btn-outline:hover {
+    background: var(--color-accent-light);
+}
+
+.skin-rdl .wiki-editor-toolbar {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-rdl .wiki-editor-toolbar button:hover {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.skin-rdl .wiki-toc {
+    background: var(--color-bg-secondary);
+    border-left: 3px solid var(--color-accent);
+}
+
+.skin-rdl .wiki-page-content h1,
+.skin-rdl .wiki-page-content h2 {
+    border-bottom-color: var(--color-accent);
+}
+
+.skin-rdl .wiki-page-content blockquote {
+    border-left-color: var(--color-accent);
+    background: var(--color-bg-secondary);
+}
+
+.skin-rdl .wiki-folding summary {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+}
+
+.skin-rdl .wiki-category {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+}
+
+.skin-rdl a {
+    color: var(--color-link);
+}
+
+.skin-rdl a:hover {
+    color: var(--color-accent-hover);
+}
+
+/* ===== RDL Theme - Dark Mode ===== */
+.skin-rdl-dark {
+    /* Dark Base Colors */
+    --color-bg-primary: #1E1A1B;
+    --color-bg-secondary: #2A2425;
+    --color-bg-tertiary: #3D3536;
+    --color-text-primary: #F0EDEB;
+    --color-text-secondary: #C9C4C2;
+    --color-text-muted: #9A9494;
+    --color-border: #4A4243;
+    --color-border-light: #3D3536;
+
+    /* Brand Colors - Lighter Wine for Dark Mode */
+    --color-accent: #C94A4E;
+    --color-accent-hover: #D96B6E;
+    --color-accent-light: rgba(201, 74, 78, 0.2);
+    --color-accent-rgb: 201, 74, 78;
+
+    /* Status Colors for Dark Mode */
+    --color-success: #4CAF7C;
+    --color-warning: #E5A84B;
+    --color-danger: #D96B6E;
+    --color-info: #6B9BD1;
+
+    /* Wiki Link Colors */
+    --color-link: #D96B6E;
+    --color-link-visited: #B88B8D;
+    --color-link-external: #E5A84B;
+    --color-link-broken: #9A9494;
+}
+
+/* RDL Dark Mode - Component Overrides */
+.skin-rdl-dark,
+.skin-rdl-dark body {
+    background-color: var(--color-bg-secondary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.skin-rdl-dark .wiki-header {
+    background: #4A2528;
+    border-bottom: 2px solid #6D3538;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.skin-rdl-dark .wiki-header-logo {
+    color: #F0EDEB;
+}
+
+.skin-rdl-dark .wiki-header-nav a,
+.skin-rdl-dark .wiki-header-nav button {
+    color: rgba(240, 237, 235, 0.9);
+}
+
+.skin-rdl-dark .wiki-header-nav a:hover,
+.skin-rdl-dark .wiki-header-nav button:hover {
+    background: rgba(240, 237, 235, 0.1);
+    color: #F0EDEB;
+}
+
+.skin-rdl-dark .wiki-search-input {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.skin-rdl-dark .wiki-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.skin-rdl-dark .wiki-sidebar {
+    background: var(--color-bg-primary);
+    border-right-color: var(--color-border);
+}
+
+.skin-rdl-dark .wiki-page,
+.skin-rdl-dark .wiki-editor,
+.skin-rdl-dark .wiki-history {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-rdl-dark .wiki-page-header {
+    border-bottom-color: var(--color-accent);
+}
+
+.skin-rdl-dark .wiki-page-title {
+    color: var(--color-accent);
+}
+
+.skin-rdl-dark .form-input,
+.skin-rdl-dark .form-textarea,
+.skin-rdl-dark .form-select,
+.skin-rdl-dark .wiki-editor-textarea {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.skin-rdl-dark .btn-primary {
+    background: var(--color-accent);
+    color: #F0EDEB;
+}
+
+.skin-rdl-dark .btn-primary:hover {
+    background: var(--color-accent-hover);
+}
+
+.skin-rdl-dark .btn-secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.skin-rdl-dark .btn-outline {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.skin-rdl-dark .btn-outline:hover {
+    background: var(--color-accent-light);
+}
+
+.skin-rdl-dark .wiki-editor-toolbar {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-rdl-dark .wiki-editor-toolbar button {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.skin-rdl-dark .wiki-toc,
+.skin-rdl-dark .wiki-folding,
+.skin-rdl-dark .wiki-editor-preview {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+.skin-rdl-dark .wiki-page-content pre,
+.skin-rdl-dark .wiki-page-content code {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-rdl-dark .wiki-page-content blockquote {
+    background: var(--color-bg-secondary);
+    border-left-color: var(--color-accent);
+}
+
+.skin-rdl-dark .wiki-page-content th {
+    background: var(--color-bg-tertiary);
+}
+
+.skin-rdl-dark .wiki-folding summary {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+}
+
+.skin-rdl-dark .wiki-category {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+}
+
+.skin-rdl-dark .alert-success {
+    background: rgba(76, 175, 124, 0.2);
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.skin-rdl-dark .alert-error {
+    background: rgba(217, 107, 110, 0.2);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* ===== 303 Corsair Theme - Dark Mode Only ===== */
+.skin-303-corsair {
+    /* Base Colors - Military/Aviation Dark Theme */
+    --color-bg-primary: #424546;
+    --color-bg-secondary: #4D5D69;
+    --color-bg-tertiary: #3A3C3D;
+    --color-text-primary: #D6DADD;
+    --color-text-secondary: #A0A8AD;
+    --color-text-muted: #7A8388;
+    --color-border: #5A6B78;
+    --color-border-light: #424546;
+
+    /* Brand Colors - Blue Accent + Lime Link */
+    --color-accent: #008dc9;
+    --color-accent-hover: #00A0E0;
+    --color-accent-light: rgba(0, 141, 201, 0.15);
+    --color-accent-rgb: 0, 141, 201;
+
+    /* Link Colors - Lime (교체됨) */
+    --color-link: #9AB952;
+    --color-link-visited: #8AA842;
+    --color-link-external: #B0D060;
+    --color-link-broken: #7A8388;
+
+    /* Status Colors - Aviation Inspired */
+    --color-success: #9AB952;
+    --color-warning: #E5A84B;
+    --color-danger: #E05252;
+    --color-info: #008dc9;
+}
+
+/* 303 Corsair - Component Overrides */
+.skin-303-corsair,
+.skin-303-corsair body {
+    background-color: var(--color-bg-secondary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.skin-303-corsair .wiki-header {
+    background: linear-gradient(180deg, #4D5D69 0%, #424546 100%);
+    border-bottom: 2px solid var(--color-accent);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.skin-303-corsair .wiki-header-logo {
+    color: var(--color-accent);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.skin-303-corsair .wiki-header-logo:hover {
+    color: var(--color-accent-hover);
+}
+
+.skin-303-corsair .wiki-header-nav a,
+.skin-303-corsair .wiki-header-nav button {
+    color: var(--color-text-primary);
+}
+
+.skin-303-corsair .wiki-header-nav a:hover,
+.skin-303-corsair .wiki-header-nav button:hover {
+    background: rgba(0, 141, 201, 0.2);
+    color: var(--color-accent);
+}
+
+.skin-303-corsair .wiki-search-input {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.skin-303-corsair .wiki-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.skin-303-corsair .wiki-search-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.skin-303-corsair .wiki-sidebar {
+    background: var(--color-bg-primary);
+    border-right: 1px solid var(--color-border);
+}
+
+.skin-303-corsair .wiki-page,
+.skin-303-corsair .wiki-editor,
+.skin-303-corsair .wiki-history {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.skin-303-corsair .wiki-page-header {
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.skin-303-corsair .wiki-page-title {
+    color: var(--color-text-primary);
+}
+
+.skin-303-corsair .form-input,
+.skin-303-corsair .form-textarea,
+.skin-303-corsair .form-select,
+.skin-303-corsair .wiki-editor-textarea {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.skin-303-corsair .form-input:focus,
+.skin-303-corsair .form-textarea:focus,
+.skin-303-corsair .form-select:focus,
+.skin-303-corsair .wiki-editor-textarea:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.skin-303-corsair .btn-primary {
+    background: linear-gradient(180deg, #00A0E0 0%, #008dc9 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.skin-303-corsair .btn-primary:hover {
+    background: linear-gradient(180deg, #10B0F0 0%, #00A0E0 100%);
+}
+
+.skin-303-corsair .btn-secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-303-corsair .btn-secondary:hover {
+    background: var(--color-border);
+}
+
+.skin-303-corsair .btn-outline {
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    background: transparent;
+}
+
+.skin-303-corsair .btn-outline:hover {
+    background: var(--color-accent-light);
+}
+
+.skin-303-corsair .btn-danger {
+    background: linear-gradient(180deg, #E86060 0%, #E05252 100%);
+    color: white;
+}
+
+.skin-303-corsair .wiki-editor-toolbar {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-303-corsair .wiki-editor-toolbar button {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.skin-303-corsair .wiki-editor-toolbar button:hover {
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.skin-303-corsair .wiki-toc {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-link);
+}
+
+.skin-303-corsair .wiki-folding,
+.skin-303-corsair .wiki-editor-preview {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-303-corsair .wiki-folding summary {
+    background: rgba(154, 185, 82, 0.2);
+    color: var(--color-link);
+}
+
+.skin-303-corsair .wiki-page-content h1,
+.skin-303-corsair .wiki-page-content h2 {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-text-primary);
+}
+
+.skin-303-corsair .wiki-page-content h1 {
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.skin-303-corsair .wiki-page-content h2 {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.skin-303-corsair .wiki-page-content pre,
+.skin-303-corsair .wiki-page-content code {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+}
+
+.skin-303-corsair .wiki-page-content blockquote {
+    background: var(--color-bg-tertiary);
+    border-left: 4px solid var(--color-link);
+}
+
+.skin-303-corsair .wiki-page-content th {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+}
+
+.skin-303-corsair .wiki-page-content td {
+    border-color: var(--color-border);
+}
+
+.skin-303-corsair .wiki-category {
+    background: rgba(154, 185, 82, 0.2);
+    color: var(--color-link);
+}
+
+.skin-303-corsair a {
+    color: var(--color-link);
+}
+
+.skin-303-corsair a:hover {
+    color: var(--color-accent);
+}
+
+.skin-303-corsair .alert-success {
+    background: rgba(0, 141, 201, 0.2);
+    color: var(--color-info);
+    border: 1px solid var(--color-info);
+}
+
+.skin-303-corsair .alert-error {
+    background: rgba(224, 82, 82, 0.2);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
+}
+
+.skin-303-corsair .modal-content,
+.skin-303-corsair .wiki-preview-content {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
 }
 
 /* ===== Reset & Base ===== */
@@ -878,4 +1585,80 @@ button {
     .wiki-header-search {
         display: none;
     }
+}
+
+/* ===== YouTube Embed ===== */
+.wiki-youtube {
+    position: relative;
+    margin: var(--spacing-lg) 0;
+    text-align: center;
+}
+
+.wiki-youtube iframe {
+    max-width: 100%;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+/* Responsive YouTube */
+.wiki-youtube-responsive {
+    position: relative;
+    padding-bottom: 56.25%;
+    /* 16:9 */
+    height: 0;
+    overflow: hidden;
+}
+
+.wiki-youtube-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== Preview Modal ===== */
+.wiki-preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: var(--spacing-lg);
+}
+
+.wiki-preview-content {
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.wiki-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-primary);
+    z-index: 1;
+}
+
+.wiki-preview-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
+.wiki-preview-body {
+    padding: var(--spacing-lg);
 }

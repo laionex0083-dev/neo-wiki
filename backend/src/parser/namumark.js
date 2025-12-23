@@ -19,6 +19,46 @@
  * - 문단: [목차]
  */
 
+import { JSDOM } from 'jsdom';
+import DOMPurify from 'dompurify';
+
+// Node.js 환경에서 DOMPurify 초기화
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
+
+// DOMPurify 설정 - 위키에서 허용할 태그/속성 정의
+const SANITIZE_CONFIG = {
+    ALLOWED_TAGS: [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'p', 'br', 'hr',
+        'strong', 'em', 'b', 'i', 'u', 's', 'del', 'ins',
+        'sup', 'sub', 'mark', 'small',
+        'a', 'img', 'iframe',
+        'ul', 'ol', 'li',
+        'blockquote', 'pre', 'code',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'div', 'span', 'details', 'summary',
+        'ruby', 'rt', 'rp'
+    ],
+    ALLOWED_ATTR: [
+        'href', 'src', 'alt', 'title', 'class', 'id',
+        'width', 'height', 'style', 'loading',
+        'target', 'rel', 'colspan', 'rowspan',
+        'frameborder', 'allowfullscreen', 'allow'
+    ],
+    ALLOW_DATA_ATTR: false,
+    FORBID_TAGS: ['script', 'style', 'object', 'embed', 'form', 'input', 'textarea', 'button'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+};
+
+/**
+ * HTML을 sanitize하는 함수
+ */
+function sanitizeHtml(html) {
+    return purify.sanitize(html, SANITIZE_CONFIG);
+}
+
+
 export class NamuMarkParser {
     constructor(options = {}) {
         this.footnotes = [];
@@ -44,6 +84,7 @@ export class NamuMarkParser {
         this.footnoteIndex = 0;
         this.toc = [];
         this.tocIndex = 0;
+        this.inlineCodeBlocks = []; // 인라인 코드 블록 보호용
 
         // 전처리
         let processed = this.preprocess(text);
@@ -54,11 +95,20 @@ export class NamuMarkParser {
         // 인라인 레벨 파싱
         processed = this.parseInline(processed);
 
+        // 인라인 코드 블록 복원
+        this.inlineCodeBlocks.forEach((code, index) => {
+            processed = processed.replace(`\x01INLINE_CODE_${index}\x01`,
+                `<code class="wiki-inline-code">${this.escapeHtml(code)}</code>`);
+        });
+
         // 각주 렌더링
         const footnotesHtml = this.renderFootnotes();
 
+        // XSS 방지를 위한 HTML 살균 처리
+        const finalHtml = sanitizeHtml(processed + footnotesHtml);
+
         return {
-            html: processed + footnotesHtml,
+            html: finalHtml,
             toc: this.toc,
             footnotes: this.footnotes
         };
@@ -111,7 +161,16 @@ export class NamuMarkParser {
 
             // 코드 블록 시작/종료 처리
             if (line.includes('{{{') && !inCodeBlock) {
-                // 멀티라인 코드블록 체크
+                // 멀티라인 코드블록 체크 (folding 포함)
+                const foldingMatch = line.match(/^\{\{\{#!folding\s+(.+)\s*$/);
+                if (foldingMatch) {
+                    inCodeBlock = true;
+                    codeBlockType = 'folding';
+                    codeBlockLang = foldingMatch[1].trim(); // folding 제목
+                    codeBlockContent = '';
+                    continue;
+                }
+
                 const codeMatch = line.match(/^\{\{\{(#!(\w+)(?:\s+(\w+))?)?\s*$/);
                 if (codeMatch) {
                     inCodeBlock = true;
@@ -314,8 +373,13 @@ export class NamuMarkParser {
      * 인라인 레벨 파싱 (링크, 서식 등)
      */
     parseInline(text) {
-        // 인라인 코드 {{{...}}}
-        text = text.replace(/\{\{\{([^}]+)\}\}\}/g, '<code class="wiki-inline-code">$1</code>');
+        // 인라인 코드 {{{...}}} - 내용을 보호하기 위해 플레이스홀더로 대체
+        // 정규식: 중첩되지 않은 {{{ }}} 매칭
+        text = text.replace(/\{\{\{((?:(?!\{\{\{|\}\}\}).)*)\}\}\}/g, (match, content) => {
+            const index = this.inlineCodeBlocks.length;
+            this.inlineCodeBlocks.push(content);
+            return `\x01INLINE_CODE_${index}\x01`;
+        });
 
         // 내부 링크 [[문서명]] 또는 [[문서명|표시]]
         text = text.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (match, page, display) => {
@@ -335,10 +399,9 @@ export class NamuMarkParser {
                 return this.renderImage(page, display);
             }
 
-            // 분류
+            // 분류 - 본문에서는 렌더링하지 않음 (하단 분류 섹션에서 표시)
             if (page.startsWith('분류:') || page.startsWith('Category:')) {
-                const category = page.replace(/^(분류|Category):/, '');
-                return `<span class="wiki-category" data-category="${this.escapeHtml(category)}">${display || category}</span>`;
+                return ''; // 본문에서는 빈 문자열 반환
             }
 
             // 앵커 링크
@@ -367,10 +430,9 @@ export class NamuMarkParser {
                 return this.renderImage(page);
             }
 
-            // 분류
+            // 분류 - 본문에서는 렌더링하지 않음 (하단 분류 섹션에서 표시)
             if (page.startsWith('분류:') || page.startsWith('Category:')) {
-                const category = page.replace(/^(분류|Category):/, '');
-                return `<span class="wiki-category" data-category="${this.escapeHtml(category)}">${category}</span>`;
+                return ''; // 본문에서는 빈 문자열 반환
             }
 
             // 앵커
@@ -456,6 +518,15 @@ export class NamuMarkParser {
         // 현재 날짜/시간 [date], [datetime]
         text = text.replace(/\[date\]/gi, new Date().toLocaleDateString('ko-KR'));
         text = text.replace(/\[datetime\]/gi, new Date().toLocaleString('ko-KR'));
+
+        // 유튜브 임베드 [youtube(영상id)] 또는 [youtube(영상id, width=너비, height=높이)]
+        text = text.replace(/\[youtube\(([a-zA-Z0-9_-]{11})(?:,\s*width=(\d+))?(?:,\s*height=(\d+))?\)\]/gi,
+            (match, videoId, width, height) => {
+                const w = width || 560;
+                const h = height || 315;
+                return `<div class="wiki-youtube"><iframe width="${w}" height="${h}" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+            }
+        );
 
         return text;
     }

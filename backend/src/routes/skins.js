@@ -23,9 +23,19 @@ router.get('/', (req, res) => {
                 description: '어두운 배경의 스킨'
             },
             {
-                name: 'namu',
-                display_name: '나무 스타일',
-                description: '나무위키 스타일 스킨'
+                name: 'rdl',
+                display_name: '066 Test Squadron',
+                description: '와인/버건디 톤의 클래식한 테마'
+            },
+            {
+                name: 'rdl-dark',
+                display_name: 'RDL 다크',
+                description: '와인/버건디 톤의 다크 모드'
+            },
+            {
+                name: '303-corsair',
+                display_name: '303 Corsair',
+                description: '군사/항공 테마의 청록+라임 다크 모드'
             }
         ];
 

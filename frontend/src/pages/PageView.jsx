@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import CommentSection from '../components/CommentSection';
 
-function PageView({ defaultTitle }) {
+function PageView({ defaultTitle, user }) {
     const { title: paramTitle } = useParams();
     const title = paramTitle ? decodeURIComponent(paramTitle) : (defaultTitle || '대문');
     const navigate = useNavigate();
@@ -103,6 +104,9 @@ function PageView({ defaultTitle }) {
                     <Link to={`/history/${encodeURIComponent(page.title)}`} className="btn btn-secondary">
                         📜 역사
                     </Link>
+                    <Link to={`/backlinks/${encodeURIComponent(page.title)}`} className="btn btn-secondary">
+                        🔗 역링크
+                    </Link>
                 </div>
             </div>
 
@@ -146,6 +150,9 @@ function PageView({ defaultTitle }) {
                     마지막 수정: {new Date(page.updated_at).toLocaleString('ko-KR')}
                 </span>
             </div>
+
+            {/* 코멘트 섹션 */}
+            <CommentSection pageTitle={page.title} currentUser={user} />
         </div>
     );
 }

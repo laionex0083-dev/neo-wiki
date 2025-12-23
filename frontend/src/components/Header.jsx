@@ -1,22 +1,123 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-function Header({ user, onLogin, onLogout }) {
+function Header({ user, onLogin, onLogout, isAdmin }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const searchRef = useRef(null);
+    const debounceRef = useRef(null);
     const navigate = useNavigate();
+
+    // 디바운싱된 자동완성 검색
+    useEffect(() => {
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        if (!searchQuery.trim()) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        debounceRef.current = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/pages/autocomplete?q=${encodeURIComponent(searchQuery.trim())}&limit=10`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setSuggestions(data.results || []);
+                    setShowSuggestions(data.results?.length > 0);
+                    setSelectedIndex(-1);
+                }
+            } catch (err) {
+                console.error('Autocomplete error:', err);
+            }
+        }, 200); // 200ms 디바운싱
+
+        return () => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+        };
+    }, [searchQuery]);
+
+    // 외부 클릭 시 드롭다운 닫기
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
+            setShowSuggestions(false);
             navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
         }
     };
 
-    const handleGoToPage = (e) => {
+    const handleInputChange = (e) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const handleKeyDown = (e) => {
+        // Ctrl+Enter: 바로가기
         if (e.key === 'Enter' && e.ctrlKey && searchQuery.trim()) {
+            setShowSuggestions(false);
             navigate(`/w/${encodeURIComponent(searchQuery.trim())}`);
+            return;
         }
+
+        // 방향키 및 Enter로 자동완성 선택
+        if (showSuggestions && suggestions.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(prev => Math.min(prev + 1, suggestions.length - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(prev => Math.max(prev - 1, -1));
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault();
+                handleSelectSuggestion(suggestions[selectedIndex]);
+            } else if (e.key === 'Escape') {
+                setShowSuggestions(false);
+            }
+        }
+    };
+
+    const handleSelectSuggestion = (title) => {
+        setSearchQuery(title);
+        setShowSuggestions(false);
+        navigate(`/w/${encodeURIComponent(title)}`);
+    };
+
+    // 검색어 하이라이팅
+    const highlightMatch = (text, query) => {
+        if (!query.trim()) return text;
+
+        const queryLower = query.toLowerCase();
+        const textLower = text.toLowerCase();
+        const index = textLower.indexOf(queryLower);
+
+        if (index === -1) return text;
+
+        return (
+            <>
+                {text.slice(0, index)}
+                <strong style={{ color: 'var(--color-accent)', background: 'rgba(var(--color-accent-rgb), 0.15)' }}>
+                    {text.slice(index, index + query.length)}
+                </strong>
+                {text.slice(index + query.length)}
+            </>
+        );
     };
 
     return (
@@ -26,21 +127,94 @@ function Header({ user, onLogin, onLogout }) {
                     🌳 Neo-Wiki
                 </Link>
 
-                <form className="wiki-header-search" onSubmit={handleSearch}>
+                <form
+                    className="wiki-header-search"
+                    onSubmit={handleSearch}
+                    ref={searchRef}
+                    style={{ position: 'relative' }}
+                >
                     <input
                         type="text"
                         className="wiki-search-input"
                         placeholder="문서 검색... (Ctrl+Enter: 바로가기)"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={handleGoToPage}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        onFocus={() => {
+                            if (suggestions.length > 0) setShowSuggestions(true);
+                        }}
+                        autoComplete="off"
                     />
+
+                    {/* 자동완성 드롭다운 */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            background: 'var(--color-bg-primary)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '0 0 var(--radius-md) var(--radius-md)',
+                            boxShadow: 'var(--shadow-lg)',
+                            zIndex: 1000,
+                            maxHeight: '300px',
+                            overflowY: 'auto'
+                        }}>
+                            {suggestions.map((title, index) => (
+                                <div
+                                    key={title}
+                                    onClick={() => handleSelectSuggestion(title)}
+                                    style={{
+                                        padding: '0.5rem 0.75rem',
+                                        cursor: 'pointer',
+                                        background: index === selectedIndex
+                                            ? 'var(--color-bg-secondary)'
+                                            : 'transparent',
+                                        borderBottom: index < suggestions.length - 1
+                                            ? '1px solid var(--color-border-light)'
+                                            : 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}
+                                    onMouseEnter={() => setSelectedIndex(index)}
+                                >
+                                    <span style={{ opacity: 0.5, fontSize: '0.85em' }}>📄</span>
+                                    <span>{highlightMatch(title, searchQuery)}</span>
+                                </div>
+                            ))}
+                            <div style={{
+                                padding: '0.4rem 0.75rem',
+                                fontSize: '0.75rem',
+                                color: 'var(--color-text-muted)',
+                                background: 'var(--color-bg-tertiary)',
+                                borderTop: '1px solid var(--color-border)'
+                            }}>
+                                ↑↓ 선택 · Enter 이동 · Ctrl+Enter 바로가기
+                            </div>
+                        </div>
+                    )}
                 </form>
 
                 <nav className="wiki-header-nav">
                     <Link to="/recent">최근 변경</Link>
                     <Link to="/pages">문서 목록</Link>
                     <Link to="/upload">업로드</Link>
+
+                    {/* 관리자 아이콘 - admin/owner에게만 표시 */}
+                    {isAdmin && (
+                        <Link
+                            to="/admin"
+                            title="관리자 페이지"
+                            style={{
+                                color: 'var(--color-accent)',
+                                fontWeight: 600
+                            }}
+                        >
+                            🔧
+                        </Link>
+                    )}
 
                     {user ? (
                         <>
