@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { dbHelper } from '../database/init.js';
+import { authLimiter } from '../app.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'neo-wiki-secret-key-change-in-production';
@@ -38,7 +39,7 @@ function hasPermission(userRole, requiredRole) {
 /**
  * 회원가입
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
@@ -104,7 +105,7 @@ router.post('/register', async (req, res) => {
 /**
  * 로그인
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
 
@@ -233,8 +234,8 @@ router.get('/admin/users', authenticateToken, requireRole(ROLES.ADMIN), (req, re
             SELECT id, username, email, role, created_at, last_login, edit_count, is_blocked, blocked_until, block_reason
             FROM users
             ORDER BY created_at DESC
-            LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
-        `).all();
+            LIMIT ? OFFSET ?
+        `).all(parseInt(limit, 10), parseInt(offset, 10));
 
         const total = dbHelper.prepare('SELECT COUNT(*) as count FROM users').get();
 
@@ -449,8 +450,8 @@ router.get('/admin/logs', authenticateToken, requireRole(ROLES.ADMIN), (req, res
             FROM admin_logs al
             LEFT JOIN users u ON al.admin_id = u.id
             ORDER BY al.created_at DESC
-            LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
-        `).all();
+            LIMIT ? OFFSET ?
+        `).all(parseInt(limit, 10), parseInt(offset, 10));
 
         res.json({ logs });
     } catch (error) {

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { dbHelper } from '../database/init.js';
+import { writeLimiter } from '../app.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -107,7 +108,7 @@ router.get('/file/:originalname', (req, res) => {
 /**
  * 이미지 업로드
  */
-router.post('/', upload.single('file'), (req, res) => {
+router.post('/', writeLimiter, upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: '파일이 필요합니다.' });
@@ -154,7 +155,7 @@ router.post('/', upload.single('file'), (req, res) => {
 /**
  * 다중 이미지 업로드
  */
-router.post('/multiple', upload.array('files', 10), (req, res) => {
+router.post('/multiple', writeLimiter, upload.array('files', 10), (req, res) => {
     try {
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ error: '파일이 필요합니다.' });
@@ -219,8 +220,8 @@ router.get('/', (req, res) => {
         const { limit = 50, offset = 0 } = req.query;
 
         const files = dbHelper.prepare(`
-      SELECT * FROM files ORDER BY uploaded_at DESC LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
-    `).all();
+      SELECT * FROM files ORDER BY uploaded_at DESC LIMIT ? OFFSET ?
+    `).all(parseInt(limit, 10), parseInt(offset, 10));
 
         const filesWithUrl = files.map(file => ({
             ...file,
@@ -240,7 +241,7 @@ router.get('/', (req, res) => {
 /**
  * 파일 삭제 (stored_name 또는 id로 삭제)
  */
-router.delete('/:identifier', (req, res) => {
+router.delete('/:identifier', writeLimiter, (req, res) => {
     try {
         const identifier = req.params.identifier;
 

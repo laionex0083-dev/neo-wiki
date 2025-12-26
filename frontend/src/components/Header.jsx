@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 function Header({ user, onLogin, onLogout, isAdmin }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -10,6 +10,14 @@ function Header({ user, onLogin, onLogout, isAdmin }) {
     const searchRef = useRef(null);
     const debounceRef = useRef(null);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // 페이지 이동 시 검색어 초기화
+    useEffect(() => {
+        setSearchQuery('');
+        setSuggestions([]);
+        setShowSuggestions(false);
+    }, [location.pathname]);
 
     // 디바운싱된 자동완성 검색
     useEffect(() => {

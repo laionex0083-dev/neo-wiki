@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { formatDate } from '../utils/dateUtils';
 
 function DiffView() {
     const { title: paramTitle, rev1, rev2 } = useParams();
@@ -105,15 +106,7 @@ function DiffView() {
         return changes;
     };
 
-    const formatDate = (dateStr) => {
-        return new Date(dateStr).toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+
 
     if (loading) {
         return (

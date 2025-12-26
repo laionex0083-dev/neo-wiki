@@ -1,6 +1,7 @@
 import express from 'express';
 import { dbHelper } from '../database/init.js';
 import jwt from 'jsonwebtoken';
+import { writeLimiter } from '../app.js';
 
 const router = express.Router();
 
@@ -81,7 +82,7 @@ router.get('/:pageTitle', (req, res) => {
  * 코멘트 작성
  * POST /api/comments/:pageTitle
  */
-router.post('/:pageTitle', requireAuth, (req, res) => {
+router.post('/:pageTitle', writeLimiter, requireAuth, (req, res) => {
     try {
         const { pageTitle } = req.params;
         const { content } = req.body;
@@ -137,7 +138,7 @@ router.post('/:pageTitle', requireAuth, (req, res) => {
  * 코멘트 수정
  * PUT /api/comments/id/:commentId
  */
-router.put('/id/:commentId', requireAuth, (req, res) => {
+router.put('/id/:commentId', writeLimiter, requireAuth, (req, res) => {
     try {
         const { commentId } = req.params;
         const { content } = req.body;
@@ -201,7 +202,7 @@ router.put('/id/:commentId', requireAuth, (req, res) => {
  * 코멘트 삭제
  * DELETE /api/comments/id/:commentId
  */
-router.delete('/id/:commentId', requireAuth, (req, res) => {
+router.delete('/id/:commentId', writeLimiter, requireAuth, (req, res) => {
     try {
         const { commentId } = req.params;
 

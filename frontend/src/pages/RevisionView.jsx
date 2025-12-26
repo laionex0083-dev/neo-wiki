@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { formatDateTimeFull } from '../utils/dateUtils';
 
 function RevisionView() {
     const { title: paramTitle, revision: paramRevision } = useParams();
@@ -32,16 +33,7 @@ function RevisionView() {
         }
     };
 
-    const formatDate = (dateStr) => {
-        return new Date(dateStr).toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    };
+
 
     if (loading) {
         return (
@@ -102,7 +94,7 @@ function RevisionView() {
                     <span>r{revisionData?.revision}</span>
 
                     <strong>편집 일시:</strong>
-                    <span>{formatDate(revisionData?.edited_at)}</span>
+                    <span>{formatDateTimeFull(revisionData?.edited_at)}</span>
 
                     <strong>편집 요약:</strong>
                     <span>{revisionData?.edit_summary || '(없음)'}</span>

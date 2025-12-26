@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { formatDate, formatFileSize } from '../utils/dateUtils';
 
 function UploadPage() {
     const [files, setFiles] = useState([]);
@@ -154,21 +155,7 @@ function UploadPage() {
         }
     };
 
-    const formatFileSize = (bytes) => {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-    };
 
-    const formatDate = (dateStr) => {
-        return new Date(dateStr).toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     const totalPages = Math.ceil(totalImages / imagesPerPage);
 

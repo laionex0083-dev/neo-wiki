@@ -13,6 +13,9 @@ function Sidebar({ user, isAdmin }) {
 
             <h3>도구</h3>
             <nav className="wiki-sidebar-nav">
+                <Link to="/tools/dice">🎲 주사위 시뮬레이터</Link>
+                <a href="https://andrea4595.github.io/ObsidianProtocolRoasterReady/" target="_blank" rel="noopener noreferrer">📋 로스터 빌더 ↗</a>
+                <a href="https://random0v0.github.io/AmadeusEmber/AmadeusEmber_web/" target="_blank" rel="noopener noreferrer">🤖 AmadeusEmber ↗</a>
                 <Link to="/upload">파일 업로드</Link>
                 <Link to="/pages?namespace=분류">분류 목록</Link>
                 <Link to="/settings">⚙️ 설정</Link>
@@ -40,6 +43,7 @@ function Sidebar({ user, isAdmin }) {
             <nav className="wiki-sidebar-nav">
                 <Link to="/w/도움말:문법">문법 도움말</Link>
                 <Link to="/w/도움말:편집">편집 도움말</Link>
+                <Link to="/w/도움말:표">표 도움말</Link>
             </nav>
 
             {/* 로그인 상태 표시 */}

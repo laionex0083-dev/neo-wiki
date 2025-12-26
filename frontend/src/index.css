@@ -539,14 +539,14 @@
 /* ===== 303 Corsair Theme - Dark Mode Only ===== */
 .skin-303-corsair {
     /* Base Colors - Military/Aviation Dark Theme */
-    --color-bg-primary: #424546;
-    --color-bg-secondary: #4D5D69;
+    --color-bg-primary: #45424F;
+    --color-bg-secondary: #333333;
     --color-bg-tertiary: #3A3C3D;
     --color-text-primary: #D6DADD;
     --color-text-secondary: #A0A8AD;
     --color-text-muted: #7A8388;
     --color-border: #5A6B78;
-    --color-border-light: #424546;
+    --color-border-light: #45424F;
 
     /* Brand Colors - Blue Accent + Lime Link */
     --color-accent: #008dc9;
@@ -575,7 +575,7 @@
 }
 
 .skin-303-corsair .wiki-header {
-    background: linear-gradient(180deg, #4D5D69 0%, #424546 100%);
+    background: linear-gradient(180deg, #45424F 0%, #333333 100%);
     border-bottom: 2px solid var(--color-accent);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
@@ -971,6 +971,253 @@ button {
 .wiki-sidebar-nav a:hover {
     color: var(--color-accent);
     text-decoration: none;
+}
+
+/* ===== Mobile Bottom Navigation ===== */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border);
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    /* 모바일에서 콘텐츠가 하단 네비게이션과 겹치지 않도록 여백 추가 */
+    .wiki-content {
+        padding-bottom: 80px !important;
+    }
+
+    /* 모바일에서 헤더 검색창 숨김 */
+    .wiki-header-search {
+        display: none;
+    }
+
+    /* 모바일에서 헤더 우측 네비 간소화 */
+    .wiki-header-nav {
+        gap: var(--spacing-xs);
+    }
+
+    .wiki-header-nav a,
+    .wiki-header-nav button {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: var(--font-size-xs);
+    }
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 12px;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.mobile-nav-item.active {
+    background: var(--color-accent-light);
+}
+
+.mobile-nav-item svg {
+    opacity: 0.8;
+}
+
+.mobile-nav-item.active svg {
+    opacity: 1;
+}
+
+/* ===== Mobile Search Bar ===== */
+.mobile-search-bar {
+    display: none;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border);
+    padding: 8px 12px;
+    z-index: 999;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+    .mobile-search-bar {
+        display: block;
+    }
+
+    /* 검색 바가 추가되었으므로 메인 콘텐츠 패딩 조정 */
+    .wiki-main {
+        padding-top: calc(var(--header-height) + 52px);
+    }
+}
+
+.mobile-search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 6px 12px;
+}
+
+.mobile-search-icon {
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+}
+
+.mobile-search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    outline: none;
+}
+
+.mobile-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.mobile-search-btn {
+    background: var(--color-accent);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-search-btn:hover {
+    background: var(--color-accent-hover);
+    transform: scale(1.05);
+}
+
+.mobile-search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 12px;
+    right: 12px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.mobile-search-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-border-light);
+    transition: background 0.15s ease;
+}
+
+.mobile-search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.mobile-search-suggestion-item:hover,
+.mobile-search-suggestion-item.selected {
+    background: var(--color-bg-secondary);
+}
+
+.mobile-search-suggestion-item .suggestion-icon {
+    opacity: 0.5;
+    font-size: 0.9em;
+}
+
+.mobile-search-suggestion-item .suggestion-text {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+}
+
+/* ===== Floating Scroll Buttons ===== */
+.floating-scroll-buttons {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.floating-scroll-buttons.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+@media (min-width: 769px) {
+    .floating-scroll-buttons {
+        bottom: 24px;
+        right: 24px;
+    }
+}
+
+.floating-scroll-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.floating-scroll-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.floating-scroll-btn:active {
+    transform: scale(0.95);
 }
 
 /* ===== Page View ===== */
@@ -1661,4 +1908,390 @@ button {
 
 .wiki-preview-body {
     padding: var(--spacing-lg);
+}
+
+/* ============================================
+   Dice Simulator Styles - Light Theme
+   ============================================ */
+.dice-simulator {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    background: #F2F4F6;
+    color: #263238;
+    border-radius: 16px;
+    border: 1px solid #CFD8DC;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+.dice-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .dice-layout {
+        flex-direction: row;
+    }
+}
+
+/* Result Panel */
+.dice-result-panel {
+    width: 100%;
+    background: #90A4AE;
+    border-bottom: 1px solid #78909C;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .dice-result-panel {
+        width: 240px;
+        border-bottom: none;
+        border-right: 1px solid #78909C;
+    }
+}
+
+.dice-result-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #42A5F5, #7E57C2, #EF5350);
+    opacity: 0.9;
+}
+
+.dice-result-header {
+    color: #263238;
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+}
+
+.dice-result-display {
+    position: relative;
+    z-index: 1;
+}
+
+.dice-result-value {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.dice-result-value.calculating {
+    opacity: 0.5;
+    filter: blur(2px);
+}
+
+.dice-result-percent {
+    font-size: 1.25rem;
+    margin-left: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+}
+
+.dice-result-label {
+    font-size: 0.625rem;
+    color: #263238;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+    line-height: 1.4;
+    opacity: 0.7;
+}
+
+.dice-reroll-status {
+    margin-top: 1.5rem;
+    font-size: 0.7rem;
+    font-family: monospace;
+}
+
+.dice-reroll-status .atk-reroll {
+    display: block;
+    color: #C62828;
+    font-weight: 600;
+}
+
+.dice-reroll-status .def-reroll {
+    display: block;
+    color: #1565C0;
+    font-weight: 600;
+}
+
+/* Control Panel */
+.dice-control-panel {
+    flex: 1;
+    padding: 1.5rem;
+    background: #F2F4F6;
+}
+
+.dice-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.dice-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #263238;
+    margin: 0;
+}
+
+.dice-version {
+    font-size: 0.7rem;
+    font-family: monospace;
+    color: #607D8B;
+    background: #ECEFF1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #CFD8DC;
+}
+
+/* Sections */
+.dice-section {
+    margin-bottom: 1.25rem;
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #E0E0E0;
+}
+
+.dice-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.dice-section-header.attack {
+    color: #C62828;
+}
+
+.dice-section-header.defense {
+    color: #1565C0;
+}
+
+.dice-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+@media (min-width: 480px) {
+    .dice-controls-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Control Group */
+.dice-control-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.875rem;
+    background: #F5F5F5;
+    border-radius: 8px;
+    border: 1px solid #E0E0E0;
+}
+
+.dice-control-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #455A64;
+}
+
+.dice-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dice-control-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dice-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #90A4AE;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.dice-btn:hover {
+    background: #78909C;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dice-count {
+    width: 24px;
+    text-align: center;
+    font-weight: 700;
+    color: #263238;
+}
+
+/* Options */
+.dice-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.dice-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #CFD8DC;
+    background: #ECEFF1;
+    color: #607D8B;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dice-option-btn:hover {
+    background: #CFD8DC;
+    color: #455A64;
+}
+
+.dice-option-btn.active {
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+}
+
+.dice-option-btn.active.red {
+    background: #E53935;
+    color: #fff;
+}
+
+.dice-option-btn.active.orange {
+    background: #FB8C00;
+    color: #fff;
+}
+
+.dice-option-btn.active.blue {
+    background: #1E88E5;
+    color: #fff;
+}
+
+.dice-option-btn.active.cyan {
+    background: #00ACC1;
+    color: #fff;
+}
+
+/* Divider */
+.dice-divider {
+    height: 1px;
+    background: #E0E0E0;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+/* Footer */
+.dice-footer {
+    background: #ffffff;
+    border-top: 1px solid #E0E0E0;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.dice-footer-icon {
+    color: #90A4AE;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.dice-footer-text {
+    font-size: 0.6875rem;
+    color: #607D8B;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.dice-footer-text strong {
+    color: #455A64;
+}
+
+/* ===== Wiki Table Styles ===== */
+.wiki-table-wrap {
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.wiki-table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid var(--color-border, #dee2e6);
+    background: var(--color-bg-primary, #fff);
+}
+
+.wiki-table td,
+.wiki-table th {
+    border: 1px solid var(--color-border, #dee2e6);
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    /* 기본 가운데 정렬 */
+    vertical-align: middle;
+}
+
+.wiki-table tr:nth-child(even) {
+    background: var(--color-bg-secondary, #f8f9fa);
+}
+
+.wiki-table caption {
+    padding: 0.5rem;
+    font-weight: 600;
+    text-align: center;
+    background: var(--color-bg-tertiary, #e9ecef);
+    border: 1px solid var(--color-border, #dee2e6);
+    border-bottom: none;
 }

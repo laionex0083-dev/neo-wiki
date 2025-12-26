@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { formatDate, formatBytes } from '../utils/dateUtils';
 
 function RecentChanges() {
     const [changes, setChanges] = useState([]);
@@ -19,36 +20,6 @@ function RecentChanges() {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = now - date;
-
-        // 1시간 이내
-        if (diff < 3600000) {
-            const mins = Math.floor(diff / 60000);
-            return `${mins}분 전`;
-        }
-        // 24시간 이내
-        if (diff < 86400000) {
-            const hours = Math.floor(diff / 3600000);
-            return `${hours}시간 전`;
-        }
-        // 그 외
-        return date.toLocaleString('ko-KR', {
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const formatBytes = (bytes) => {
-        if (bytes === 0) return '±0';
-        const sign = bytes > 0 ? '+' : '';
-        return sign + bytes.toLocaleString();
     };
 
     if (loading) {

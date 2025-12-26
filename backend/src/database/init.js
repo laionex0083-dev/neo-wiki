@@ -1,4 +1,4 @@
-import initSqlJs from 'sql.js';
+import Database from 'better-sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
@@ -17,19 +17,15 @@ if (!fs.existsSync(dataDir)) {
 // 전역 DB 인스턴스
 let db = null;
 
-export async function initDatabase() {
-  const SQL = await initSqlJs();
+export function initDatabase() {
+  // better-sqlite3는 동기 API 사용
+  db = new Database(DB_PATH);
 
-  // 기존 DB 파일이 있으면 로드
-  if (fs.existsSync(DB_PATH)) {
-    const buffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(buffer);
-  } else {
-    db = new SQL.Database();
-  }
+  // WAL 모드 활성화 (성능 및 안정성 향상)
+  db.pragma('journal_mode = WAL');
 
   // 문서 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS pages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL UNIQUE,
@@ -46,7 +42,7 @@ export async function initDatabase() {
   `);
 
   // 문서 히스토리 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS page_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       page_id INTEGER NOT NULL,
@@ -62,7 +58,7 @@ export async function initDatabase() {
   `);
 
   // 사용자 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL UNIQUE,
@@ -79,7 +75,7 @@ export async function initDatabase() {
   `);
 
   // 파일/이미지 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS files (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       original_name TEXT NOT NULL,
@@ -93,7 +89,7 @@ export async function initDatabase() {
   `);
 
   // 분류(카테고리) 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       page_id INTEGER NOT NULL,
@@ -103,7 +99,7 @@ export async function initDatabase() {
   `);
 
   // 백링크 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS backlinks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       from_page_id INTEGER NOT NULL,
@@ -113,7 +109,7 @@ export async function initDatabase() {
   `);
 
   // 스킨 설정 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS skin_settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       skin_name TEXT NOT NULL UNIQUE,
@@ -126,7 +122,7 @@ export async function initDatabase() {
   `);
 
   // 위키 설정 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS wiki_settings (
       key TEXT PRIMARY KEY,
       value TEXT,
@@ -135,7 +131,7 @@ export async function initDatabase() {
   `);
 
   // 문서 보호(ACL) 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS page_acl (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       page_id INTEGER,
@@ -152,7 +148,7 @@ export async function initDatabase() {
   `);
 
   // 사용자 차단 기록 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS user_blocks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -165,7 +161,7 @@ export async function initDatabase() {
   `);
 
   // 관리자 로그 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS admin_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       admin_id INTEGER NOT NULL,
@@ -178,7 +174,7 @@ export async function initDatabase() {
   `);
 
   // 코멘트 테이블
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS comments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       page_id INTEGER NOT NULL,
@@ -192,12 +188,12 @@ export async function initDatabase() {
   `);
 
   // 인덱스 생성
-  db.run(`CREATE INDEX IF NOT EXISTS idx_pages_title ON pages(title)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_pages_namespace ON pages(namespace)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_history_page_id ON page_history(page_id)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_backlinks_to ON backlinks(to_page_title)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(category_name)`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_comments_page_id ON comments(page_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pages_title ON pages(title)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pages_namespace ON pages(namespace)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_history_page_id ON page_history(page_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_backlinks_to ON backlinks(to_page_title)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(category_name)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_comments_page_id ON comments(page_id)`);
 
   // 기본 설정 삽입
   const defaultSettings = [
@@ -208,17 +204,18 @@ export async function initDatabase() {
     ['main_page', '대문']
   ];
 
+  const insertSetting = db.prepare('INSERT OR IGNORE INTO wiki_settings (key, value) VALUES (?, ?)');
   for (const [key, value] of defaultSettings) {
-    db.run('INSERT OR IGNORE INTO wiki_settings (key, value) VALUES (?, ?)', [key, value]);
+    insertSetting.run(key, value);
   }
 
   // 대문 페이지 생성
-  const mainPage = db.exec("SELECT id FROM pages WHERE title = '대문'");
-  if (mainPage.length === 0 || mainPage[0].values.length === 0) {
-    db.run(`
+  const mainPage = db.prepare("SELECT id FROM pages WHERE title = '대문'").get();
+  if (!mainPage) {
+    db.prepare(`
       INSERT INTO pages (title, content, namespace) 
       VALUES (?, ?, 'main')
-    `, ['대문', `= Neo-Wiki에 오신 것을 환영합니다! =
+    `).run('대문', `= Neo-Wiki에 오신 것을 환영합니다! =
 
 [[Neo-Wiki]]는 '''NamuMark''' 문법을 지원하는 위키 엔진입니다.
 
@@ -236,23 +233,11 @@ export async function initDatabase() {
 > 인용문도 지원합니다.
 
 ----
-[[분류:메인]]`]);
+[[분류:메인]]`);
   }
-
-  // DB 저장
-  saveDatabase();
 
   console.log('✅ 데이터베이스 초기화 완료');
   return db;
-}
-
-// DB를 파일로 저장
-export function saveDatabase() {
-  if (db) {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
-  }
 }
 
 // DB 인스턴스 가져오기
@@ -260,44 +245,58 @@ export function getDb() {
   return db;
 }
 
-// Prepared statement 래퍼
+// better-sqlite3는 자동으로 디스크에 저장하므로 saveDatabase는 no-op
+export function saveDatabase() {
+  // WAL 모드에서는 자동 저장되므로 불필요
+  // 하위 호환성을 위해 함수 유지
+}
+
+// better-sqlite3의 네이티브 API를 래핑하는 dbHelper
+// 기존 코드와 호환성 유지를 위해 동일한 인터페이스 제공
 export const dbHelper = {
   prepare(sql) {
+    const stmt = db.prepare(sql);
     return {
       run(...params) {
-        db.run(sql, params);
-        saveDatabase();
-        const result = db.exec("SELECT last_insert_rowid() as id");
-        return { lastInsertRowid: result[0]?.values[0]?.[0] || 0 };
+        const result = stmt.run(...params);
+        return {
+          lastInsertRowid: result.lastInsertRowid,
+          changes: result.changes
+        };
       },
       get(...params) {
-        const stmt = db.prepare(sql);
-        stmt.bind(params);
-        if (stmt.step()) {
-          const row = stmt.getAsObject();
-          stmt.free();
-          return row;
-        }
-        stmt.free();
-        return null;
+        return stmt.get(...params) || null;
       },
       all(...params) {
-        const result = db.exec(sql, params);
-        if (result.length === 0) return [];
-        const columns = result[0].columns;
-        return result[0].values.map(row => {
-          const obj = {};
-          columns.forEach((col, i) => obj[col] = row[i]);
-          return obj;
-        });
+        return stmt.all(...params);
       }
     };
   },
   exec(sql) {
-    db.run(sql);
-    saveDatabase();
+    db.exec(sql);
   }
 };
+
+// 정상 종료 시 DB 연결 닫기
+process.on('exit', () => {
+  if (db) {
+    db.close();
+  }
+});
+
+process.on('SIGINT', () => {
+  if (db) {
+    db.close();
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  if (db) {
+    db.close();
+  }
+  process.exit(0);
+});
 
 // 하위 호환성을 위한 export
 export { db };

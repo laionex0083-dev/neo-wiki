@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { formatDate } from '../utils/dateUtils';
 
 function AdminPage() {
     const [activeTab, setActiveTab] = useState('users');
@@ -249,16 +250,7 @@ function AdminPage() {
         return colors[role] || '#6c757d';
     };
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '-';
-        return new Date(dateStr).toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+
 
     const getActionDisplayName = (action) => {
         const actions = {

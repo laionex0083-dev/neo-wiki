@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDate } from '../utils/dateUtils';
 
 function CommentSection({ pageTitle, currentUser }) {
     const [comments, setComments] = useState([]);
@@ -139,29 +140,7 @@ function CommentSection({ pageTitle, currentUser }) {
         setEditContent('');
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString + 'Z');
-        const now = new Date();
-        const diff = now - date;
 
-        // 1분 미만
-        if (diff < 60000) return '방금 전';
-        // 1시간 미만
-        if (diff < 3600000) return `${Math.floor(diff / 60000)}분 전`;
-        // 24시간 미만
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}시간 전`;
-        // 7일 미만
-        if (diff < 604800000) return `${Math.floor(diff / 86400000)}일 전`;
-
-        // 그 외
-        return date.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     const canModify = (comment) => {
         if (!currentUser) return false;

@@ -88,8 +88,8 @@ app.use(express.static(frontendDistPath));
 // API 라우트는 DB 초기화 후 로드
 async function startServer() {
     try {
-        // 데이터베이스 초기화 (비동기)
-        await initDatabase();
+        // 데이터베이스 초기화 (better-sqlite3는 동기 API)
+        initDatabase();
 
         // 제목 캐시 초기화
         initTitleCache();
@@ -104,15 +104,11 @@ async function startServer() {
 
         // API 라우트 (Rate Limiter 적용)
         app.use('/api/pages', apiLimiter, pagesRouter);
-        app.use('/api/users', usersRouter); // 개별 엔드포인트에서 처리
+        app.use('/api/users', apiLimiter, usersRouter);  // authLimiter는 개별 라우트(register, login)에서 처리
         app.use('/api/upload', apiLimiter, uploadRouter);
         app.use('/api/history', apiLimiter, historyRouter);
         app.use('/api/skins', apiLimiter, skinsRouter);
         app.use('/api/comments', apiLimiter, commentsRouter);
-
-        // 인증 엔드포인트에 Rate Limiter 적용
-        app.post('/api/users/register', authLimiter);
-        app.post('/api/users/login', authLimiter);
 
         // 기본 라우트
         app.get('/api', (req, res) => {

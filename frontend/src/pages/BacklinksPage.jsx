@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { formatDateOnly } from '../utils/dateUtils';
 
 function BacklinksPage() {
     const { title: paramTitle } = useParams();
@@ -35,15 +36,7 @@ function BacklinksPage() {
         }
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString + 'Z');
-        return date.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
+
 
     if (loading) {
         return (
@@ -144,7 +137,7 @@ function BacklinksPage() {
                                 color: 'var(--color-text-muted)'
                             }}>
                                 <span title="조회수">👁️ {link.view_count || 0}</span>
-                                <span title="최근 수정">{formatDate(link.updated_at)}</span>
+                                <span title="최근 수정">{formatDateOnly(link.updated_at)}</span>
                             </div>
                         </div>
                     ))}

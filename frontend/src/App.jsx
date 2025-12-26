@@ -2,6 +2,9 @@ import { Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import FloatingScrollButtons from './components/FloatingScrollButtons';
+import MobileBottomNav from './components/MobileBottomNav';
+import MobileSearchBar from './components/MobileSearchBar';
 import PageView from './pages/PageView';
 import PageEdit from './pages/PageEdit';
 import PageHistory from './pages/PageHistory';
@@ -14,6 +17,7 @@ import DiffView from './pages/DiffView';
 import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
 import BacklinksPage from './pages/BacklinksPage';
+import DiceSimulatorPage from './pages/DiceSimulatorPage';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -60,6 +64,10 @@ function App() {
                 onLogout={handleLogout}
                 isAdmin={isAdmin}
             />
+
+            {/* 모바일 검색 바 (768px 이하에서만 표시) */}
+            <MobileSearchBar />
+
             <div className="wiki-main">
                 <Sidebar user={user} isAdmin={isAdmin} />
                 <main className="wiki-content">
@@ -91,6 +99,9 @@ function App() {
                         <Route path="/upload" element={<UploadPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
 
+                        {/* 도구 */}
+                        <Route path="/tools/dice" element={<DiceSimulatorPage />} />
+
                         {/* 관리자 페이지 */}
                         <Route path="/admin" element={<AdminPage />} />
 
@@ -102,6 +113,12 @@ function App() {
                     </Routes>
                 </main>
             </div>
+
+            {/* 모바일 하단 네비게이션 */}
+            <MobileBottomNav />
+
+            {/* 플로팅 스크롤 버튼 */}
+            <FloatingScrollButtons />
         </div>
     );
 }
