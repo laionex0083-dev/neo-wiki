@@ -25,11 +25,17 @@ function App() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        // 스킨 설정 로드
-        fetch('/api/skins/active')
-            .then(res => res.json())
-            .then(data => setSkin(data.skin))
-            .catch(() => { });
+        // 스킨 설정 로드 (localStorage에서 개별 설정)
+        const savedSkin = localStorage.getItem('wiki_skin');
+        if (savedSkin) {
+            setSkin(savedSkin);
+        } else {
+            // 저장된 스킨이 없으면 서버의 기본 설정 사용
+            fetch('/api/skins/active')
+                .then(res => res.json())
+                .then(data => setSkin(data.skin))
+                .catch(() => { });
+        }
 
         // 저장된 토큰으로 사용자 정보 로드
         const token = localStorage.getItem('wiki_token');

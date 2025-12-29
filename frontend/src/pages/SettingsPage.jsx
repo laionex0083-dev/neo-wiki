@@ -20,10 +20,15 @@ function SettingsPage() {
             const skinsData = await skinsRes.json();
             setAvailableSkins(skinsData.skins || []);
 
-            // 현재 활성화된 스킨
-            const activeRes = await fetch('/api/skins/active');
-            const activeData = await activeRes.json();
-            setActiveSkin(activeData.skin || 'default');
+            // 현재 활성화된 스킨 (localStorage 우선, 없으면 서버 기본값)
+            const savedSkin = localStorage.getItem('wiki_skin');
+            if (savedSkin) {
+                setActiveSkin(savedSkin);
+            } else {
+                const activeRes = await fetch('/api/skins/active');
+                const activeData = await activeRes.json();
+                setActiveSkin(activeData.skin || 'default');
+            }
         } catch (err) {
             console.error('Error fetching skins:', err);
         } finally {
@@ -31,28 +36,20 @@ function SettingsPage() {
         }
     };
 
-    const handleSkinChange = async (skinName) => {
+    const handleSkinChange = (skinName) => {
         setSaving(true);
         setMessage(null);
 
         try {
-            const res = await fetch(`/api/skins/${skinName}/activate`, {
-                method: 'POST'
-            });
+            // localStorage에 스킨 설정 저장 (브라우저별 개별 설정)
+            localStorage.setItem('wiki_skin', skinName);
+            setActiveSkin(skinName);
+            setMessage({ type: 'success', text: `'${getSkinDisplayName(skinName)}' 스킨이 적용되었습니다. 페이지를 새로고침하세요.` });
 
-            const data = await res.json();
-
-            if (res.ok) {
-                setActiveSkin(skinName);
-                setMessage({ type: 'success', text: `'${getSkinDisplayName(skinName)}' 스킨이 적용되었습니다. 페이지를 새로고침하세요.` });
-
-                // 3초 후 자동 새로고침
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                setMessage({ type: 'error', text: data.error || '스킨 변경에 실패했습니다.' });
-            }
+            // 1.5초 후 자동 새로고침
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } catch (err) {
             setMessage({ type: 'error', text: '스킨 변경 중 오류가 발생했습니다.' });
         } finally {

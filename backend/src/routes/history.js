@@ -1,5 +1,6 @@
 import express from 'express';
 import { dbHelper } from '../database/init.js';
+import { authenticateToken, requireRole, ROLES } from './users.js';
 
 const router = express.Router();
 
@@ -65,9 +66,9 @@ router.get('/:title/:revision', (req, res) => {
 });
 
 /**
- * 리비전으로 되돌리기
+ * 리비전으로 되돌리기 (모더레이터 이상만 가능)
  */
-router.post('/:title/revert/:revision', (req, res) => {
+router.post('/:title/revert/:revision', authenticateToken, requireRole(ROLES.MODERATOR), (req, res) => {
     try {
         const title = decodeURIComponent(req.params.title);
         const revision = parseInt(req.params.revision);
