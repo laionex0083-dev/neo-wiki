@@ -8,8 +8,8 @@ const config = {
     port: parseInt(process.env.PORT) || 3001,
     host: process.env.HOST || '0.0.0.0',  // 외부 접근 허용
 
-    // JWT 설정
-    jwtSecret: process.env.JWT_SECRET || 'neo-wiki-secret-key-change-in-production',
+    // JWT 설정 (환경변수로만 설정 - 보안상 기본값 없음)
+    jwtSecret: process.env.JWT_SECRET,
     jwtExpiry: process.env.JWT_EXPIRY || '7d',
 
     // 데이터베이스

@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { dbHelper } from '../database/init.js';
 import { writeLimiter } from '../app.js';
+import { authenticateToken, optionalAuth } from './users.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,13 +20,12 @@ if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
-// 허용된 파일 타입
+// 허용된 파일 타입 (SVG 제외 - XSS 취약점)
 const ALLOWED_TYPES = [
     'image/jpeg',
     'image/png',
     'image/gif',
-    'image/webp',
-    'image/svg+xml'
+    'image/webp'
 ];
 
 // Multer 설정
@@ -106,10 +106,15 @@ router.get('/file/:originalname', (req, res) => {
 });
 
 /**
- * 이미지 업로드
+ * 이미지 업로드 (인증된 사용자만, 설정에 따라 익명도 허용)
  */
-router.post('/', writeLimiter, upload.single('file'), (req, res) => {
+router.post('/', optionalAuth, writeLimiter, upload.single('file'), (req, res) => {
     try {
+        // 익명 업로드 비허용 시 인증 확인
+        if (!req.user && process.env.REQUIRE_AUTH_FOR_UPLOAD === 'true') {
+            return res.status(401).json({ error: '파일 업로드는 로그인이 필요합니다.' });
+        }
+
         if (!req.file) {
             return res.status(400).json({ error: '파일이 필요합니다.' });
         }
@@ -153,10 +158,15 @@ router.post('/', writeLimiter, upload.single('file'), (req, res) => {
 });
 
 /**
- * 다중 이미지 업로드
+ * 다중 이미지 업로드 (인증된 사용자만)
  */
-router.post('/multiple', writeLimiter, upload.array('files', 10), (req, res) => {
+router.post('/multiple', optionalAuth, writeLimiter, upload.array('files', 10), (req, res) => {
     try {
+        // 익명 업로드 비허용 시 인증 확인
+        if (!req.user && process.env.REQUIRE_AUTH_FOR_UPLOAD === 'true') {
+            return res.status(401).json({ error: '파일 업로드는 로그인이 필요합니다.' });
+        }
+
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ error: '파일이 필요합니다.' });
         }
@@ -239,9 +249,9 @@ router.get('/', (req, res) => {
 });
 
 /**
- * 파일 삭제 (stored_name 또는 id로 삭제)
+ * 파일 삭제 (인증된 사용자만, stored_name 또는 id로 삭제)
  */
-router.delete('/:identifier', writeLimiter, (req, res) => {
+router.delete('/:identifier', authenticateToken, writeLimiter, (req, res) => {
     try {
         const identifier = req.params.identifier;
 

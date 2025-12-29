@@ -74,7 +74,24 @@ const authLimiter = rateLimit({
 // 일반 미들웨어
 // ============================================
 
-app.use(cors());
+// CORS 설정 - 허용된 도메인만 접근 가능
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost:5173', 'http://localhost:3001']; // 개발용 기본값
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // origin이 없는 경우 (same-origin 요청) 허용
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -155,10 +172,21 @@ async function startServer() {
             res.status(404).json({ error: '페이지를 찾을 수 없습니다.' });
         });
 
-        // 에러 핸들러
+        // 에러 핸들러 - 프로덕션에서는 상세 에러 숨김
         app.use((err, req, res, next) => {
             console.error('Error:', err);
-            res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+
+            // CORS 에러 처리
+            if (err.message === 'CORS 정책에 의해 차단되었습니다.') {
+                return res.status(403).json({ error: err.message });
+            }
+
+            // 프로덕션 환경에서는 상세 에러 메시지 숨김
+            const errorMessage = process.env.NODE_ENV === 'production'
+                ? '서버 오류가 발생했습니다.'
+                : err.message || '서버 오류가 발생했습니다.';
+
+            res.status(500).json({ error: errorMessage });
         });
 
         // 서버 시작

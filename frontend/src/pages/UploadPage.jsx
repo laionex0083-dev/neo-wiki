@@ -176,7 +176,7 @@ function UploadPage() {
                 onClick={() => document.getElementById('file-input').click()}
             >
                 <h3>📁 파일을 여기에 드래그하거나 클릭하여 선택하세요</h3>
-                <p>PNG, JPG, GIF, WebP, SVG (최대 10MB)</p>
+                <p>PNG, JPG, GIF, WebP (최대 10MB)</p>
                 <input
                     type="file"
                     id="file-input"

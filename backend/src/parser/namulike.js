@@ -193,8 +193,8 @@ export class NamulikeParser {
                         const parsedContent = this.parseBlocks(codeBlockContent.trim());
                         result.push(`<details class="wiki-folding"><summary>${title}</summary><div>${parsedContent}</div></details>`);
                     } else if (codeBlockType === 'html') {
-                        // HTML 블록 (주의: 보안상 제한적으로)
-                        result.push(`<div class="wiki-html">${codeBlockContent}</div>`);
+                        // HTML 블록도 반드시 sanitize 적용 (XSS 방지)
+                        result.push(`<div class="wiki-html">${sanitizeHtml(codeBlockContent)}</div>`);
                     } else {
                         result.push(`<pre class="code-block"><code>${this.escapeHtml(codeBlockContent.trim())}</code></pre>`);
                     }

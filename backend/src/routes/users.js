@@ -5,7 +5,16 @@ import { dbHelper } from '../database/init.js';
 import { authLimiter } from '../app.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'neo-wiki-secret-key-change-in-production';
+
+// JWT 비밀키 - 프로덕션 환경에서는 반드시 환경변수 설정 필요
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET 환경변수가 설정되지 않았습니다. 프로덕션 환경에서는 필수입니다.');
+    }
+    console.warn('⚠️ JWT_SECRET이 설정되지 않았습니다. 개발용 기본값을 사용합니다.');
+}
+const SECRET_KEY = JWT_SECRET || 'dev-only-secret-key-do-not-use-in-production';
 
 // 사용자 권한 레벨 정의
 const ROLES = {
@@ -51,8 +60,21 @@ router.post('/register', authLimiter, async (req, res) => {
             return res.status(400).json({ error: '사용자명은 2~20자 사이여야 합니다.' });
         }
 
-        if (password.length < 6) {
-            return res.status(400).json({ error: '비밀번호는 최소 6자 이상이어야 합니다.' });
+        if (password.length < 8) {
+            return res.status(400).json({ error: '비밀번호는 최소 8자 이상이어야 합니다.' });
+        }
+
+        // 비밀번호 복잡성 검증 (대문자, 소문자, 숫자, 특수문자 중 3가지 이상)
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        const complexityScore = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(Boolean).length;
+
+        if (complexityScore < 3) {
+            return res.status(400).json({
+                error: '비밀번호는 대문자, 소문자, 숫자, 특수문자 중 3가지 이상을 포함해야 합니다.'
+            });
         }
 
         // 예약된 사용자명 확인
@@ -86,7 +108,7 @@ router.post('/register', authLimiter, async (req, res) => {
         // JWT 토큰 발급
         const token = jwt.sign(
             { userId: result.lastInsertRowid, username, role },
-            JWT_SECRET,
+            SECRET_KEY,
             { expiresIn: '7d' }
         );
 
@@ -146,7 +168,7 @@ router.post('/login', authLimiter, async (req, res) => {
         // JWT 토큰 발급
         const token = jwt.sign(
             { userId: user.id, username: user.username, role: user.role },
-            JWT_SECRET,
+            SECRET_KEY,
             { expiresIn: '7d' }
         );
 
@@ -475,7 +497,7 @@ function authenticateToken(req, res, next) {
         return res.status(401).json({ error: '인증이 필요합니다.' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, SECRET_KEY, (err, user) => {
         if (err) {
             return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
         }
@@ -492,7 +514,7 @@ function optionalAuth(req, res, next) {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-        jwt.verify(token, JWT_SECRET, (err, user) => {
+        jwt.verify(token, SECRET_KEY, (err, user) => {
             if (!err) {
                 req.user = user;
             }
