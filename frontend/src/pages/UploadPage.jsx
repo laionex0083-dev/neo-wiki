@@ -135,8 +135,12 @@ function UploadPage() {
         if (!deleteConfirmImage) return;
 
         try {
+            const token = localStorage.getItem('wiki_token');
             const res = await fetch(`/api/upload/${deleteConfirmImage.id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             const data = await res.json();

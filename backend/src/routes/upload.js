@@ -7,7 +7,7 @@ import { dirname, join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { dbHelper } from '../database/init.js';
 import { writeLimiter } from '../app.js';
-import { authenticateToken, optionalAuth } from './users.js';
+import { authenticateToken, optionalAuth, requireRole, ROLES } from './users.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -249,9 +249,9 @@ router.get('/', (req, res) => {
 });
 
 /**
- * 파일 삭제 (인증된 사용자만, stored_name 또는 id로 삭제)
+ * 파일 삭제 (관리자 이상만 가능, stored_name 또는 id로 삭제)
  */
-router.delete('/:identifier', authenticateToken, writeLimiter, (req, res) => {
+router.delete('/:identifier', authenticateToken, requireRole(ROLES.ADMIN), writeLimiter, (req, res) => {
     try {
         const identifier = req.params.identifier;
 

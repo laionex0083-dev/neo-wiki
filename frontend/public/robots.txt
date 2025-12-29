@@ -1,0 +1,44 @@
+# Neo-Wiki robots.txt
+# 메인 페이지만 크롤링 허용, 나머지 모든 페이지 금지
+
+User-agent: *
+
+# 메인 페이지(루트) 허용
+Allow: /$
+
+# 모든 그 외 페이지 금지
+Disallow: /
+
+# API 엔드포인트 금지
+Disallow: /api/
+
+# 업로드된 파일 금지
+Disallow: /uploads/
+
+# 위키 문서 페이지 금지
+Disallow: /wiki/
+
+# 편집 페이지 금지
+Disallow: /edit/
+
+# 히스토리 페이지 금지
+Disallow: /history/
+
+# 관리자 페이지 금지
+Disallow: /admin/
+
+# 검색 페이지 금지
+Disallow: /search
+
+# 사용자 관련 페이지 금지
+Disallow: /login
+Disallow: /register
+Disallow: /profile/
+
+# 기타 페이지 금지
+Disallow: /upload
+Disallow: /recent
+Disallow: /random
+
+# Sitemap (선택 사항)
+# Sitemap: https://eopwikitest.ddns.net/sitemap.xml
