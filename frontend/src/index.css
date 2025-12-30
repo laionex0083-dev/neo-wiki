@@ -1220,6 +1220,19 @@ button {
     transform: scale(0.95);
 }
 
+/* 목차 이동 버튼 - 둥근 사각형 */
+.floating-toc-btn {
+    border-radius: var(--radius-md);
+    background: var(--color-accent-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.floating-toc-btn:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
 /* ===== Page View ===== */
 .wiki-page {
     background: var(--color-bg-primary);

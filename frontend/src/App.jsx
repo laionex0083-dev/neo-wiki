@@ -18,6 +18,8 @@ import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
 import BacklinksPage from './pages/BacklinksPage';
 import DiceSimulatorPage from './pages/DiceSimulatorPage';
+import CategoryPage from './pages/CategoryPage';
+import CategoryListPage from './pages/CategoryListPage';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -104,6 +106,10 @@ function App() {
                         <Route path="/search" element={<SearchResults />} />
                         <Route path="/upload" element={<UploadPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
+
+                        {/* 분류 */}
+                        <Route path="/category/:name" element={<CategoryPage />} />
+                        <Route path="/categories" element={<CategoryListPage />} />
 
                         {/* 도구 */}
                         <Route path="/tools/dice" element={<DiceSimulatorPage />} />

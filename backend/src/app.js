@@ -120,6 +120,7 @@ async function startServer() {
         const historyRouter = (await import('./routes/history.js')).default;
         const skinsRouter = (await import('./routes/skins.js')).default;
         const commentsRouter = (await import('./routes/comments.js')).default;
+        const categoriesRouter = (await import('./routes/categories.js')).default;
 
         // API 라우트 (Rate Limiter 적용)
         app.use('/api/pages', apiLimiter, pagesRouter);
@@ -128,6 +129,7 @@ async function startServer() {
         app.use('/api/history', apiLimiter, historyRouter);
         app.use('/api/skins', apiLimiter, skinsRouter);
         app.use('/api/comments', apiLimiter, commentsRouter);
+        app.use('/api/categories', apiLimiter, categoriesRouter);
 
         // 기본 라우트
         app.get('/api', (req, res) => {

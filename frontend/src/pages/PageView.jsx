@@ -123,13 +123,29 @@ function PageView({ defaultTitle, user }) {
 
             {/* 분류 */}
             {page.categories && page.categories.length > 0 && (
-                <div className="wiki-categories">
-                    <strong>분류: </strong>
+                <div className="wiki-categories" style={{
+                    marginTop: '2rem',
+                    padding: '1rem',
+                    background: 'var(--color-bg-secondary)',
+                    borderRadius: 'var(--radius-md)',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                }}>
+                    <strong style={{ marginRight: '0.5rem' }}>📁 분류:</strong>
                     {page.categories.map((cat, i) => (
                         <Link
                             key={i}
-                            to={`/w/분류:${encodeURIComponent(cat)}`}
-                            className="wiki-category"
+                            to={`/category/${encodeURIComponent(cat)}`}
+                            style={{
+                                padding: '0.2rem 0.6rem',
+                                background: 'var(--color-bg-primary)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--color-link)',
+                                textDecoration: 'none',
+                                fontSize: '0.9rem'
+                            }}
                         >
                             {cat}
                         </Link>

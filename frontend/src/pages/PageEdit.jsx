@@ -31,6 +31,11 @@ function PageEdit() {
     const [previewHtml, setPreviewHtml] = useState('');
     const [previewLoading, setPreviewLoading] = useState(false);
 
+    // 제목 변경 관련 상태
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const [newTitle, setNewTitle] = useState('');
+    const [renaming, setRenaming] = useState(false);
+
     useEffect(() => {
         if (title) {
             fetchPage();
@@ -235,7 +240,6 @@ function PageEdit() {
         }
     };
 
-    // 미리보기 핸들러
     const handlePreview = async () => {
         if (!content.trim()) {
             setError('미리볼 내용이 없습니다.');
@@ -265,6 +269,55 @@ function PageEdit() {
             setError(err.message);
         } finally {
             setPreviewLoading(false);
+        }
+    };
+
+    // 제목 변경 모달 열기
+    const openRenameModal = () => {
+        setNewTitle(title);
+        setShowRenameModal(true);
+    };
+
+    // 제목 변경 처리
+    const handleRename = async () => {
+        if (!newTitle.trim()) {
+            setError('새 문서 제목을 입력해주세요.');
+            return;
+        }
+
+        if (newTitle.trim() === title) {
+            setError('현재 제목과 동일합니다.');
+            return;
+        }
+
+        setRenaming(true);
+        setError(null);
+
+        try {
+            const token = localStorage.getItem('wiki_token');
+            const res = await fetch(`/api/pages/${encodeURIComponent(title)}/rename`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ newTitle: newTitle.trim() })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || '제목 변경에 실패했습니다.');
+            }
+
+            // 성공 시 새 제목으로 이동
+            alert(`문서 제목이 "${data.newTitle}"로 변경되었습니다.`);
+            navigate(`/edit/${encodeURIComponent(data.newTitle)}`);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setRenaming(false);
+            setShowRenameModal(false);
         }
     };
 
@@ -309,6 +362,7 @@ function PageEdit() {
     ];
 
     const canProtect = currentUser && ['admin', 'owner', 'moderator'].includes(currentUser.role);
+    const canRename = currentUser && ['admin', 'owner', 'moderator'].includes(currentUser.role);
 
     const getProtectionLevelName = (level) => {
         const names = {
@@ -419,6 +473,78 @@ function PageEdit() {
                                 disabled={deleting}
                             >
                                 {deleting ? '삭제 중...' : '삭제 확인'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 제목 변경 모달 */}
+            {showRenameModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        background: 'var(--color-bg-primary)',
+                        padding: '1.5rem',
+                        borderRadius: 'var(--radius-lg)',
+                        maxWidth: '450px',
+                        width: '90%',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>✏️ 문서 제목 변경</h3>
+                        <p style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                            현재 제목: <strong>"{title}"</strong>
+                        </p>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                                새 제목
+                            </label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
+                                placeholder="새 문서 제목을 입력하세요"
+                                autoFocus
+                            />
+                        </div>
+
+                        <p style={{
+                            marginBottom: '1.5rem',
+                            color: 'var(--color-warning)',
+                            fontSize: '0.85rem',
+                            padding: '0.5rem',
+                            background: 'rgba(255, 193, 7, 0.1)',
+                            borderRadius: 'var(--radius-sm)'
+                        }}>
+                            ⚠️ 제목 변경 시 히스토리에 기록되며, 기존 링크는 자동으로 업데이트되지 않습니다.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setShowRenameModal(false)}
+                                disabled={renaming}
+                            >
+                                취소
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleRename}
+                                disabled={renaming || !newTitle.trim() || newTitle.trim() === title}
+                            >
+                                {renaming ? '변경 중...' : '제목 변경'}
                             </button>
                         </div>
                     </div>
@@ -668,9 +794,21 @@ function PageEdit() {
                     <button
                         className="btn btn-outline"
                         onClick={() => setShowProtectionModal(true)}
-                        disabled={saving || deleting}
+                        disabled={saving || deleting || renaming}
                     >
                         🔒 문서 보호
+                    </button>
+                )}
+
+                {/* 제목 변경 버튼 (모더레이터 이상) */}
+                {!isNew && canRename && (
+                    <button
+                        className="btn btn-outline"
+                        onClick={openRenameModal}
+                        disabled={saving || deleting || renaming}
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        ✏️ 제목 변경
                     </button>
                 )}
 
@@ -679,8 +817,8 @@ function PageEdit() {
                     <button
                         className="btn btn-danger"
                         onClick={handleDeleteClick}
-                        disabled={saving || deleting}
-                        style={{ marginLeft: 'auto' }}
+                        disabled={saving || deleting || renaming}
+                        style={{ marginLeft: canRename ? '0' : 'auto' }}
                     >
                         🗑️ 문서 삭제
                     </button>

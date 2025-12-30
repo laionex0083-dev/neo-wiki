@@ -501,6 +501,77 @@ router.post('/:title', writeLimiter, authenticateToken, requireRole(ROLES.VERIFI
 });
 
 /**
+ * 문서 제목 변경 (모더레이터 권한 필요)
+ * PUT /api/pages/:title/rename
+ */
+router.put('/:title/rename', writeLimiter, authenticateToken, requireRole(ROLES.MODERATOR), (req, res) => {
+    try {
+        const oldTitle = decodeURIComponent(req.params.title);
+        const { newTitle } = req.body;
+
+        // 새 제목 유효성 검사
+        if (!newTitle || !newTitle.trim()) {
+            return res.status(400).json({ error: '새 문서 제목을 입력해주세요.' });
+        }
+
+        const trimmedNewTitle = newTitle.trim();
+
+        // 제목 길이 제한
+        if (trimmedNewTitle.length > 200) {
+            return res.status(400).json({ error: '문서 제목은 200자를 초과할 수 없습니다.' });
+        }
+
+        // 같은 제목인지 확인
+        if (oldTitle === trimmedNewTitle) {
+            return res.status(400).json({ error: '현재 제목과 동일합니다.' });
+        }
+
+        // 기존 문서 확인
+        const page = dbHelper.prepare('SELECT id FROM pages WHERE title = ?').get(oldTitle);
+        if (!page) {
+            return res.status(404).json({ error: '문서를 찾을 수 없습니다.' });
+        }
+
+        // 새 제목으로 된 문서가 이미 존재하는지 확인
+        const existingPage = dbHelper.prepare('SELECT id FROM pages WHERE title = ?').get(trimmedNewTitle);
+        if (existingPage) {
+            return res.status(409).json({ error: `'${trimmedNewTitle}' 제목의 문서가 이미 존재합니다.` });
+        }
+
+        // 문서 제목 변경
+        dbHelper.prepare('UPDATE pages SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+            .run(trimmedNewTitle, page.id);
+
+        // 히스토리에 제목 변경 기록
+        const currentContent = dbHelper.prepare('SELECT content FROM pages WHERE id = ?').get(page.id)?.content || '';
+        const revResult = dbHelper.prepare('SELECT MAX(revision) as maxRev FROM page_history WHERE page_id = ?').get(page.id);
+        const newRevision = (revResult?.maxRev || 0) + 1;
+
+        dbHelper.prepare(`
+            INSERT INTO page_history (page_id, title, content, revision, edit_summary, edited_by)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(page.id, trimmedNewTitle, currentContent, newRevision, `문서 제목 변경: ${oldTitle} → ${trimmedNewTitle}`, req.user.id);
+
+        // 제목 캐시 업데이트
+        removeFromTitleCache(oldTitle);
+        addToTitleCache(trimmedNewTitle);
+
+        // 데이터베이스 저장
+        saveDatabase();
+
+        res.json({
+            success: true,
+            message: '문서 제목이 변경되었습니다.',
+            oldTitle,
+            newTitle: trimmedNewTitle
+        });
+    } catch (error) {
+        console.error('Error renaming page:', error);
+        res.status(500).json({ error: '문서 제목을 변경하는 중 오류가 발생했습니다.' });
+    }
+});
+
+/**
  * 문서 삭제 (관리자 권한 필요)
  */
 router.delete('/:title', writeLimiter, optionalAuth, (req, res) => {
