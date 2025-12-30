@@ -10,6 +10,10 @@ function CommentSection({ pageTitle, currentUser }) {
     const [editContent, setEditContent] = useState('');
     const [error, setError] = useState(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState(null); // 삭제 확인 모달용
+    const [showLoginModal, setShowLoginModal] = useState(false); // 로그인 모달
+    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const [loginError, setLoginError] = useState(null);
+    const [loginLoading, setLoginLoading] = useState(false);
 
     useEffect(() => {
         fetchComments();
@@ -140,7 +144,50 @@ function CommentSection({ pageTitle, currentUser }) {
         setEditContent('');
     };
 
+    // 로그인 모달 열기
+    const openLoginModal = () => {
+        setShowLoginModal(true);
+        setLoginError(null);
+        setLoginForm({ username: '', password: '' });
+    };
 
+    // 로그인 모달 닫기
+    const closeLoginModal = () => {
+        setShowLoginModal(false);
+        setLoginError(null);
+        setLoginForm({ username: '', password: '' });
+    };
+
+    // 로그인 처리
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        if (!loginForm.username.trim() || !loginForm.password.trim()) return;
+
+        setLoginLoading(true);
+        setLoginError(null);
+
+        try {
+            const res = await fetch('/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loginForm)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                localStorage.setItem('wiki_token', data.token);
+                // 로그인 성공 시 페이지 새로고침
+                window.location.reload();
+            } else {
+                setLoginError(data.error || '로그인에 실패했습니다.');
+            }
+        } catch (err) {
+            setLoginError('로그인 중 오류가 발생했습니다.');
+        } finally {
+            setLoginLoading(false);
+        }
+    };
 
     const canModify = (comment) => {
         if (!currentUser) return false;
@@ -237,7 +284,18 @@ function CommentSection({ pageTitle, currentUser }) {
                     color: 'var(--color-text-muted)',
                     marginBottom: '1.5rem'
                 }}>
-                    코멘트를 작성하려면 <a href="/login" style={{ color: 'var(--color-link)' }}>로그인</a>해주세요.
+                    코멘트를 작성하려면 <button
+                        onClick={openLoginModal}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--color-link)',
+                            cursor: 'pointer',
+                            padding: 0,
+                            fontSize: 'inherit',
+                            textDecoration: 'underline'
+                        }}
+                    >로그인</button>해주세요.
                 </div>
             )}
 
@@ -437,6 +495,94 @@ function CommentSection({ pageTitle, currentUser }) {
                                 삭제
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 로그인 모달 */}
+            {showLoginModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        background: 'var(--color-bg-primary)',
+                        padding: '1.5rem',
+                        borderRadius: 'var(--radius-lg)',
+                        maxWidth: '400px',
+                        width: '90%',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>🔐 로그인</h3>
+
+                        {loginError && (
+                            <div style={{
+                                padding: '0.75rem',
+                                background: 'rgba(220, 53, 69, 0.1)',
+                                border: '1px solid var(--color-danger)',
+                                borderRadius: 'var(--radius-md)',
+                                color: 'var(--color-danger)',
+                                marginBottom: '1rem',
+                                fontSize: '0.9rem'
+                            }}>
+                                {loginError}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleLogin}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                                    아이디
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={loginForm.username}
+                                    onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                                    placeholder="아이디를 입력하세요"
+                                    autoFocus
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                                    비밀번호
+                                </label>
+                                <input
+                                    type="password"
+                                    className="form-input"
+                                    value={loginForm.password}
+                                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                                    placeholder="비밀번호를 입력하세요"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={closeLoginModal}
+                                    disabled={loginLoading}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={loginLoading || !loginForm.username.trim() || !loginForm.password.trim()}
+                                >
+                                    {loginLoading ? '로그인 중...' : '로그인'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

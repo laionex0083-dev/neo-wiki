@@ -97,6 +97,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // 정적 파일 (업로드된 이미지)
 app.use('/uploads', express.static(join(__dirname, '../uploads')));
+app.use('/uploads/originals', express.static(join(__dirname, '../uploads/originals')));
+app.use('/uploads/watermarked', express.static(join(__dirname, '../uploads/watermarked')));
 
 // 프론트엔드 정적 파일 (프로덕션용)
 const frontendDistPath = join(__dirname, '../../frontend/dist');

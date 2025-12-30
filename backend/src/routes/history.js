@@ -18,10 +18,12 @@ router.get('/:title', (req, res) => {
         }
 
         const history = dbHelper.prepare(`
-      SELECT id, page_id, revision, title, edit_summary, edited_at, bytes_changed
-      FROM page_history
-      WHERE page_id = ?
-      ORDER BY revision DESC
+      SELECT h.id, h.page_id, h.revision, h.title, h.edit_summary, h.edited_at, h.bytes_changed, h.edited_by,
+             u.username as editor_name
+      FROM page_history h
+      LEFT JOIN users u ON h.edited_by = u.id
+      WHERE h.page_id = ?
+      ORDER BY h.revision DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `).all(page.id);
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import { dbHelper, saveDatabase } from '../database/init.js';
 import { parseNamulike } from '../parser/namulike.js';
-import { optionalAuth, canEditPage, ROLES, hasPermission } from './users.js';
+import { optionalAuth, authenticateToken, requireRole, canEditPage, ROLES, hasPermission } from './users.js';
 import { searchTitles, addToTitleCache, removeFromTitleCache } from '../titleCache.js';
 import { writeLimiter } from '../app.js';
 
@@ -232,8 +232,10 @@ router.get('/special/recent', (req, res) => {
         const { limit = 50 } = req.query;
 
         const changes = dbHelper.prepare(`
-      SELECT h.id, h.page_id, h.revision, h.title, h.edit_summary, h.edited_at, h.bytes_changed
+      SELECT h.id, h.page_id, h.revision, h.title, h.edit_summary, h.edited_at, h.bytes_changed, h.edited_by,
+             u.username as editor_name
       FROM page_history h
+      LEFT JOIN users u ON h.edited_by = u.id
       ORDER BY h.edited_at DESC
       LIMIT ?
     `).all(parseInt(limit, 10));
@@ -409,12 +411,13 @@ function parseRedirect(content) {
 }
 
 /**
- * 문서 생성/수정
+ * 문서 생성/수정 (인증된 사용자 이상만 가능)
  */
-router.post('/:title', writeLimiter, optionalAuth, canEditPage, (req, res) => {
+router.post('/:title', writeLimiter, authenticateToken, requireRole(ROLES.VERIFIED), canEditPage, (req, res) => {
     try {
         const title = decodeURIComponent(req.params.title);
         const { content, edit_summary = '' } = req.body;
+        const userId = req.user?.userId || null;
 
         if (typeof content !== 'string') {
             return res.status(400).json({ error: '문서 내용이 필요합니다.' });
@@ -429,24 +432,25 @@ router.post('/:title', writeLimiter, optionalAuth, canEditPage, (req, res) => {
         if (existingPage) {
             // 기존 문서 수정
             dbHelper.prepare(
-                `UPDATE pages SET content = ?, is_redirect = ?, redirect_to = ?, updated_at = datetime('now') WHERE id = ?`
-            ).run(content, isRedirect ? 1 : 0, redirectTo, existingPage.id);
+                `UPDATE pages SET content = ?, is_redirect = ?, redirect_to = ?, updated_at = datetime('now'), updated_by = ? WHERE id = ?`
+            ).run(content, isRedirect ? 1 : 0, redirectTo, userId, existingPage.id);
 
-            // 히스토리 기록
+            // 히스토리 기록 (편집자 ID 포함)
             const lastRevision = dbHelper.prepare(
                 'SELECT MAX(revision) as rev FROM page_history WHERE page_id = ?'
             ).get(existingPage.id);
 
             dbHelper.prepare(`
-        INSERT INTO page_history (page_id, revision, title, content, edit_summary, bytes_changed)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO page_history (page_id, revision, title, content, edit_summary, bytes_changed, edited_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run(
                 existingPage.id,
                 (lastRevision?.rev || 0) + 1,
                 title,
                 content,
                 edit_summary,
-                bytesChanged
+                bytesChanged,
+                userId
             );
 
             // 백링크/분류 업데이트 (리다이렉트 문서는 리다이렉트 대상을 백링크로 추가)
@@ -461,19 +465,19 @@ router.post('/:title', writeLimiter, optionalAuth, canEditPage, (req, res) => {
                 redirectTo
             });
         } else {
-            // 새 문서 생성
+            // 새 문서 생성 (생성자 ID 포함)
             const result = dbHelper.prepare(`
-        INSERT INTO pages (title, content, namespace, is_redirect, redirect_to)
-        VALUES (?, ?, 'main', ?, ?)
-      `).run(title, content, isRedirect ? 1 : 0, redirectTo);
+        INSERT INTO pages (title, content, namespace, is_redirect, redirect_to, created_by, updated_by)
+        VALUES (?, ?, 'main', ?, ?, ?, ?)
+      `).run(title, content, isRedirect ? 1 : 0, redirectTo, userId, userId);
 
             const pageId = result.lastInsertRowid;
 
-            // 첫 히스토리 기록
+            // 첫 히스토리 기록 (편집자 ID 포함)
             dbHelper.prepare(`
-        INSERT INTO page_history (page_id, revision, title, content, edit_summary, bytes_changed)
-        VALUES (?, 1, ?, ?, ?, ?)
-      `).run(pageId, title, content, edit_summary || (isRedirect ? `'${redirectTo}'(으)로 리다이렉트` : '새 문서 작성'), content.length);
+        INSERT INTO page_history (page_id, revision, title, content, edit_summary, bytes_changed, edited_by)
+        VALUES (?, 1, ?, ?, ?, ?, ?)
+      `).run(pageId, title, content, edit_summary || (isRedirect ? `'${redirectTo}'(으)로 리다이렉트` : '새 문서 작성'), content.length, userId);
 
             // 백링크/분류 업데이트
             updateBacklinks(pageId, content);

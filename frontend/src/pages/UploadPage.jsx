@@ -27,7 +27,9 @@ function UploadPage() {
         setLoadingImages(true);
         try {
             const offset = (currentPage - 1) * imagesPerPage;
-            const res = await fetch(`/api/upload?limit=${imagesPerPage}&offset=${offset}`);
+            const token = localStorage.getItem('wiki_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch(`/api/upload?limit=${imagesPerPage}&offset=${offset}`, { headers });
             const data = await res.json();
             setImageList(data.files || []);
             setTotalImages(data.total || 0);
@@ -69,11 +71,21 @@ function UploadPage() {
         setError(null);
 
         try {
+            const token = localStorage.getItem('wiki_token');
+            if (!token) {
+                setError('파일 업로드는 로그인이 필요합니다.');
+                setUploading(false);
+                return;
+            }
+
             const formData = new FormData();
             files.forEach(file => formData.append('files', file));
 
             const res = await fetch('/api/upload/multiple', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
                 body: formData
             });
 
@@ -118,6 +130,43 @@ function UploadPage() {
         const code = `[[파일:${file.original_name}]]`;
         navigator.clipboard.writeText(code);
         alert('위키 코드가 클립보드에 복사되었습니다!');
+    };
+
+    // 원본 이미지 다운로드 (인증 토큰 포함)
+    const downloadOriginal = async (file) => {
+        try {
+            const token = localStorage.getItem('wiki_token');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            const response = await fetch(`/api/upload/${file.id}/original`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                alert(data.error || '다운로드에 실패했습니다.');
+                return;
+            }
+
+            // Blob으로 변환 후 다운로드
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.original_name.replace(/\.[^.]+$/, '') + '_original.webp';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Download error:', err);
+            alert('다운로드 중 오류가 발생했습니다.');
+        }
     };
 
     // 삭제 확인 모달 표시
@@ -353,7 +402,7 @@ function UploadPage() {
                                     }}>
                                         {img.original_name}
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                                         <button
                                             className="btn btn-outline"
                                             onClick={() => copyWikiCode(img)}
@@ -361,6 +410,16 @@ function UploadPage() {
                                         >
                                             📋 복사
                                         </button>
+                                        {img.canDownloadOriginal && (
+                                            <button
+                                                className="btn btn-outline"
+                                                onClick={() => downloadOriginal(img)}
+                                                style={{ padding: '0.25rem', fontSize: '0.7rem' }}
+                                                title="원본 다운로드"
+                                            >
+                                                📥
+                                            </button>
+                                        )}
                                         <button
                                             className="btn btn-outline"
                                             onClick={() => showDeleteConfirm(img.id, img.stored_name, img.original_name)}
@@ -414,6 +473,16 @@ function UploadPage() {
                                     >
                                         📋 코드 복사
                                     </button>
+                                    {img.canDownloadOriginal && (
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => downloadOriginal(img)}
+                                            style={{ fontSize: '0.75rem' }}
+                                            title="원본 다운로드 (워터마크 없음)"
+                                        >
+                                            📥 원본
+                                        </button>
+                                    )}
                                     <button
                                         className="btn btn-danger"
                                         onClick={() => showDeleteConfirm(img.id, img.stored_name, img.original_name)}

@@ -74,6 +74,14 @@ function RecentChanges() {
 
                         <span style={{
                             fontSize: '0.875rem',
+                            color: 'var(--color-accent)',
+                            minWidth: '80px'
+                        }}>
+                            {change.editor_name || '(익명)'}
+                        </span>
+
+                        <span style={{
+                            fontSize: '0.875rem',
                             color: 'var(--color-text-secondary)',
                             flex: 1,
                             overflow: 'hidden',

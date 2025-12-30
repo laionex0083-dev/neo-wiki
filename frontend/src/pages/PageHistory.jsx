@@ -74,9 +74,13 @@ function PageHistory() {
         setReverting(true);
 
         try {
+            const token = localStorage.getItem('wiki_token');
             const res = await fetch(`/api/history/${encodeURIComponent(title)}/revert/${revertTargetRevision}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ reason: revertReason || '되돌리기' })
             });
 
@@ -276,6 +280,16 @@ function PageHistory() {
                             style={{ flex: 1, fontSize: '0.875rem' }}
                         >
                             {rev.edit_summary || '(편집 요약 없음)'}
+                        </span>
+                        <span
+                            style={{
+                                fontSize: '0.875rem',
+                                color: 'var(--color-accent)',
+                                minWidth: '80px',
+                                fontWeight: 500
+                            }}
+                        >
+                            {rev.editor_name || '(익명)'}
                         </span>
                         <span
                             className={`wiki-history-bytes`}
